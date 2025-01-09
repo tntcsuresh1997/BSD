@@ -1,0 +1,1048 @@
+########################################################## START ###################################################################################################################################################
+import customtkinter 
+from PIL import Image
+from serial import *
+import serial,time
+from datetime import datetime
+import tkinter as tk
+from CTkMessagebox import CTkMessagebox
+from serial.tools import list_ports
+from CTkListbox import *
+import threading,os
+import datetime,serial.tools.list_ports
+import pandas as pd
+import openpyxl
+from openpyxl.styles import PatternFill
+from openpyxl import*
+
+############################################################ GUI ###############################################################################################################################################
+
+class DisplaySetting:
+    def __init__(self):
+        self.root = customtkinter.CTk() 
+        customtkinter.set_appearance_mode("light")
+        self.root.title("AAVIZA ELECTRONICS PRIVATE LIMITED")
+        self.ser = serial.Serial()
+        self.root.geometry("720x680")
+        self.root.minsize(700, 500)  
+        self.root.maxsize(1400,1000)  
+        self.path = 'D:/BSD_Finel_Data/Aaviza_Exc/Aaviza_V_0.01/Aaviza_Tool/Aaviza_Utility/logo4.png'
+        self.update_image()
+        self.combobox_name = ''
+        icon_path = os.path.join(os.path.dirname(__file__),'D:/BSD_Finel_Data/Aaviza_Exc/Aaviza_V_0.01/Aaviza_Tool/Aaviza_Utility/logo1.ico')
+        if os.path.exists(icon_path):
+            self.root.iconbitmap(icon_path)
+
+############################################################################################################################################################################################################
+        
+        self.Employee_name = customtkinter.CTkButton(self.root, text="EMPLOYEE ID    :",  width=170, height=30,font=("Times New Roman", 18, "bold"),fg_color="#DB4035")
+        self.Employee_name.place(x=10, y=270)
+        self.Serial_name = customtkinter.CTkButton(self.root, text="SERIAL No          :", width=170, height=30,font=("Times New Roman", 18, "bold"),fg_color="#DB4035")
+        self.Serial_name.place(x=10, y=310)
+        self.date_name = customtkinter.CTkButton(self.root, text="DATE                   :",width=170, height=30,font=("Times New Roman", 18, "bold"),fg_color="#DB4035")
+        self.date_name.place(x=10, y=350)
+        self.test_module = customtkinter.CTkButton(self.root, text="TEST_MODULE :",width=170, height=10,font=("Times New Roman", 18, "bold"),fg_color="#DB4035")
+        self.test_module.place(x=10, y=390)
+        self.test_module_com1 = customtkinter.CTkButton(self.root, text="COM1 :",width=170, height=10,font=("Times New Roman", 18, "bold"),fg_color="#DB4035")
+        self.test_module_com1.place(x=10, y=180)
+        self.test_module_com2 = customtkinter.CTkButton(self.root, text="COM2 :",width=170, height=10,font=("Times New Roman", 18, "bold"),fg_color="#DB4035")
+        self.test_module_com2.place(x=10, y=220)
+        self.Employee_name1 = customtkinter.CTkEntry(self.root, placeholder_text="Enter Name")
+        self.Employee_name1.place(x=200, y=270)
+        self.Employee_name1.bind('<Return>', self.first_wizard_enter)
+        self.Serial_number = customtkinter.CTkEntry(self.root, placeholder_text="Enter Serial No")
+        self.Serial_number.place(x=200, y=310)
+        self.Serial_number.bind('<Return>', self.second_wizard_enter)
+        self.Date_name1 = customtkinter.CTkEntry(self.root, placeholder_text="Enter Date")
+        self.Date_name1.place(x=200, y=350)
+
+   ########################################################################### moudel select ####################################################################################################
+        
+        self.combobox_var = customtkinter.StringVar(value="TEMPERATURE MODULE")
+        self.combobox = customtkinter.CTkComboBox(self.root, values=["TEMPERATURE MODULE"],command=self.combobox_callback, variable=self.combobox_var)
+        self.combobox_var.set("SELECT")
+        self.combobox.place(x=200,y=390)  
+    
+
+    def first_wizard_enter(self,event):
+        input_text = self.Employee_name1.get()
+        print(input_text)
+        if input_text != " ":
+            if  event.keysym == 'Return':
+                self.Serial_number.delete(0, 'end')
+                self.Serial_number.focus_set()
+                return "break"
+            
+    def second_wizard_enter(self,event):
+        input_text = self.Serial_number.get()
+        print(input_text)
+        if input_text != " ":
+            if  event.keysym == 'Return':
+                self.Employee_name1.config(state='normal')
+                self.Employee_name1.focus_set()
+    
+                
+    def copy_text(self):
+        if self.Serial_number.tag_ranges(tk.SEL):
+            selected_text = self.Serial_number.get(tk.SEL_FIRST, tk.SEL_LAST)
+            self.Serial_number.clipboard_clear()
+            self.Serial_number.clipboard_append(selected_text)
+
+    def paste_text(self):
+        global time2
+        clipboard_text = self.Serial_number.clipboard_get()
+        time2 = time.perf_counter()
+        print(time2)
+        if time2-time <1:
+            self.Serial_number.insert(tk.INSERT, clipboard_text)
+        
+    def erase_character(self):
+        self.Serial_number.delete("end-2c")
+
+########################################################################## date time ###################################################################################################################################
+                
+    def combobox_callback(self,choice): 
+        self.combobox_name = self.combobox.get() 
+
+###################################################################### logo ######################################################################################################################################   
+
+    def update_image(self):
+        self.my_image = customtkinter.CTkImage(light_image=Image.open(self.path), size=(330, 100))
+        self.image_label = customtkinter.CTkLabel(self.root, image=self.my_image, text="")
+        self.image_label.place(x=5, y=5)
+
+    def change_logo_action(self):
+        self.my_image = customtkinter.CTkImage(light_image=Image.open(self.path), size=(330, 100))
+        self.image_label = customtkinter.CTkLabel(self.root, image=self.my_image, text="")
+        self.image_label.place(x=5, y=5)
+
+##################################################################################################################################################################################################################
+
+class Serial_Communication(DisplaySetting):
+    def __init__(self):
+        super().__init__()
+        self.comport_var1 = tk.StringVar()
+        self.ser = serial.Serial()
+        self.ser_wifi=serial.Serial()
+        self.comport_names1=[]
+        self.connection_flag = False
+
+########################################################### wifi Arrays and flags ###################################################
+      
+        self.temp_filtered_list=[]
+        self.temp_list_volt_description=[]
+        self.temp_list_volt_val_ver=[]
+        self.temp_list_volt_pf=[]
+        self.temp_list_volt_min_max=[]
+        self.temp_common_list=[]
+        self.list_cmd_temp_description = []
+        self.list_cmd_temp_val_ver = []
+        self.list_cmd_temp_pf = []
+        self.Temp_volt_common_list = []
+        self.disconnect_flag_TS = False
+        self.temperature_loop_count = 0
+
+################################### Checks of Entry Feild ############################################################################################################################################################
+
+        self.Save_serialNumber=False
+        self.Save_serialName=False
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
+        self.textbox = customtkinter.CTkTextbox(self.root, width=900,height=668,fg_color="#ffffff",font=("Times New Roman", 16),text_color="#000000")
+        self.textbox.place(x=390, y=10)
+        self.ctk_textbox_scrollbar = customtkinter.CTkScrollbar(self.root, command=self.textbox.yview)
+        self.ctk_textbox_scrollbar.grid(row=0, column=1, sticky="ns")
+
+        self.connect_button = customtkinter.CTkButton(self.root, text=" CONNECT   ", width=200, height=30,font=("Times New Roman", 18, "bold"),fg_color="#4073FF", command=lambda:[self.print_selections()])
+        self.connect_button.place(x=100, y=460)
+        self.start_button = customtkinter.CTkButton(self.root, text=" START-TEST ", width=200, height=30,font=("Times New Roman", 18, "bold"),fg_color="#4073FF",command=self.Send_Command_th)
+        self.start_button.place(x=100, y=510)
+        self.stop_button = customtkinter.CTkButton(self.root, text=" DISCONNECT ", width=200, height=30,font=("Times New Roman", 18, "bold"),fg_color="#4073FF",command=self.disconnect_action)
+        self.stop_button.place(x=100, y=560)
+
+        self.refresh_button = customtkinter.CTkButton(self.root, text=" REFRESH ", width=100, height=20,font=("Times New Roman", 18, "bold"),fg_color="#4073FF",command=self.Refresh_ports)
+        self.refresh_button.place(x=10, y=125)
+
+        self.clear_button = customtkinter.CTkButton(self.root, text=" CLEAR", width=100, height=20,font=("Times New Roman", 18, "bold"),fg_color="#4073FF",command=self.clear)
+        self.clear_button.place(x=130, y=125)
+
+        self.root.configure(fg_color="#808080")
+        self.Combobox_display()
+########################################################################### COMBOBOX COMP ###############################################################################################################################
+
+    def Combobox_display(self):
+        self.combobox_comp1 = customtkinter.StringVar(value="COM1")
+        self.combobox_port1 = customtkinter.CTkComboBox(self.root, values=self.get_available_comports(),command=self.com1_CallBack, variable=self.combobox_comp1)
+        self.combobox_comp1.set("SELECT")
+        self.combobox_port1.place(x=200,y=180)
+
+        self.combobox_comp2 = customtkinter.StringVar(value="COM2")
+        self.combobox_port2 = customtkinter.CTkComboBox(self.root, values=self.get_available_comports(),command=self.com2_CallBack, variable=self.combobox_comp2)
+        self.combobox_comp2.set("SELECT")
+        self.combobox_port2.place(x=200,y=220)
+        
+    def combobox_callback(self,choice):
+        self.combobox_name = self.combobox.get() 
+
+    def com1_CallBack(self,choice):
+        self.comport1 = self.combobox_port1.get()
+        self.combobox_port1.configure(state = customtkinter.DISABLED)
+
+    def com2_CallBack(self,choice):
+        self.comport2 = self.combobox_port2.get()
+        self.combobox_port2.configure(state = customtkinter.DISABLED)
+
+    def get_available_comports(self):
+        available_ports = list(serial.tools.list_ports.comports())
+        self.port_list = [port.device for port in available_ports]
+        print(self.port_list)
+        return self.port_list
+    
+    def Refresh_ports(self):
+        self.port_list  = []
+        self.Combobox_display()
+        
+################################################################### user_ser CONNECT ####################################################################################################################################################
+
+    def connect_action(self):
+        self.comports = list_ports.comports()
+        self.comports = sorted(self.comports)
+        self.comport_names1=[]
+        port_count = 0
+
+        try:
+            if self.comport1:
+                port_count = port_count+1
+                self.ser.port = f'{self.comport1}' 
+                self.ser.baudrate = 115200
+                self.ser.timeout = 3
+                self.ser.bytesize=serial.EIGHTBITS
+                self.ser.parity=serial.PARITY_NONE
+                self.ser.stopbits=serial.STOPBITS_ONE
+        except:
+            pass
+################################################# temp comp start ##############################################################3
+        try:
+            if self.comport2:
+                port_count = port_count+1
+                self.ser_wifi.port = f'{self.comport2}'         # as of now no need to return
+                self.ser_wifi.baudrate = 115200
+                self.ser_wifi.timeout = 3
+                self.ser_wifi.bytesize=serial.EIGHTBITS
+                self.ser_wifi.parity=serial.PARITY_NONE
+                self.ser_wifi.stopbits=serial.STOPBITS_ONE 
+        except:
+            pass 
+        return  port_count
+################################################ temp comp end ##############################################################3
+
+################################################ temp print_selections start ##############################################################3
+
+    def print_selections(self):
+        try:
+            re_com = self.connect_action()
+
+            if re_com > 0 and re_com < 3:
+                self.textbox.insert(customtkinter.END, "  PORTS STATUS      :  " + "Ports Connected" +'\n')
+            else:
+                CTkMessagebox(title="AAVIZA ELECTRONICS PRIVATE LIMITED", message="Ports not connected")
+
+            self.Employee_name=self.Employee_name1.get()
+            self.Name_Feild_Check(self.Employee_name)
+
+            self.Employee_name=self.Employee_name1.get()
+            self.first_wizard_enter(self.Employee_name)
+
+            print("Name_status",self.Save_serialName)
+
+            self.Serial_name = self.Serial_number.get()
+            self.SerialNumber_Feild_Check(self.Serial_name)
+
+            self.Serial_name = self.Serial_number.get()
+            self.second_wizard_enter(self.Serial_name)
+
+            print("Serial_status",self.Save_serialName)
+
+            self.now = datetime.datetime.now()
+            
+            self.datetime_var1 = tk.StringVar(value=self.now.strftime("%H:%M:%S"))
+            self.datetime_var = tk.StringVar(value=self.now.strftime("%d-%m-%Y"))
+            
+            self.Start_time = self.datetime_var1.get()
+
+            self.datetime = self.datetime_var.get()
+            
+            if self.Save_serialName and self.Save_serialNumber:
+                self.textbox.insert(customtkinter.END, "  EMPLOYEE ID        :  "  +        self.Employee_name  + '.'+'\n')
+                self.textbox.insert(customtkinter.END, "  SERIAL NO             :  "  +        self.Serial_name    + '.'+'\n')
+                self.textbox.insert(customtkinter.END, "  TEST MODULE       :  "  +       self.combobox_name    + '.'+'\n')
+                self.textbox.insert(customtkinter.END, "  DATE                       :  "  +        self.datetime      + '.'+'\n')
+                self.textbox.insert(customtkinter.END, "  START-TIME        :  "  +        self.Start_time      + '.'+'\n')
+                self.textbox.insert(customtkinter.END,"\n")
+                self.connect_button.configure(state=customtkinter.DISABLED)
+                self.port_open()
+            else:
+                self.clear_text()
+                self.connect_button.configure(state=customtkinter.NORMAL)
+        except:
+            pass
+
+    def port_open(self):
+        try:
+            self.connect_action()
+            print("connect_action pass")
+
+            
+        except:
+            pass
+
+################################################ temp print_selections end ##############################################################3
+
+################################################### Enty Feild Check ##################################################################
+        
+    def SerialNumber_Feild_Check(self,valueSerial):
+        if valueSerial == '':
+
+            CTkMessagebox(title="Check Entry Feild",message="Invalid Serial Number")
+            self.connect_button.configure(state=customtkinter.NORMAL)
+            self.Save_serialNumber=False
+            try:
+                self.ser.close()
+                self.ser_wifi.close()
+            except:
+                pass
+        else:
+            self.Save_serialNumber=True
+        
+    def Name_Feild_Check(self,valueName):
+        
+        if valueName =='':
+            CTkMessagebox(title="Check Entry Feild",message="Invalid Name")
+            self.connect_button.configure(state=customtkinter.NORMAL)
+            self.Save_serialName=False
+            try:
+                self.ser.close()
+                self.ser_wifi.close()
+            except:
+                pass
+        else:
+            self.Save_serialName=True
+
+################################################### Enty Feild Check end  ##################################################################
+
+################################# TEmperature function case start ###################################################################################################
+            
+    def temp_3v_on(self):
+        try:
+            self.ser.open()
+            time.sleep(0.5)
+            if self.ser.is_open:
+                try:
+                    print(f"Sending command volt: TSD01")
+                    pin = "TSD00"
+                    self.ser.write(f'{pin}'.encode('utf-8'))
+                    time.sleep(1)
+                    pin = "TSDF1"
+                    self.ser.write(f'{pin}'.encode('utf-8'))
+                    time.sleep(1)
+                    #self.ser_wifi.open()
+                    self.pop_up_flash_temp()
+                    time.sleep(1)
+                    pin = "TSD00"
+                    self.ser.write(f'{pin}'.encode('utf-8'))
+                    time.sleep(2)
+                    pin = "TSD01"
+                    self.ser.write(f'{pin}'.encode('utf-8'))
+                    time.sleep(1)
+                    self.temp_selected_volt = 'case_temp_v_c_sub'
+                    self.ser.close()
+                except:
+                    pass
+        except SerialException:
+            self.TemperatureSensor_Time_Out()
+
+    def temp_voltage_check(self):
+        try:
+            self.ser.open()
+            time.sleep(0.5)
+            if self.ser.is_open:
+                try:
+                    print(f"Sending command volt: TSD02")
+                    pin = "TSD02"
+                    self.ser.write(f'{pin}'.encode('utf-8'))
+                    time.sleep(0.5)
+                    self.Temp_volt_data()
+                    self.temp_run_flg = True
+                    self.temp_run_flg_volt = False
+                except:
+                    pass
+        except SerialException:
+            self.TemperatureSensor_Time_Out()
+
+    def temp_vFW_test(self):
+        try:
+            self.ser_wifi.open()
+            time.sleep(0.5)
+            if self.ser_wifi.is_open:
+                try:
+                    print(f"Sending command temp: vFW")
+                    pin = 'vFW'
+                    self.ser_wifi.write(f'{pin}\r'.encode('utf-8'))
+                    time.sleep(0.5)
+                    temp_flag_result=self.Temprature_Data()
+                    if temp_flag_result:
+                        self.temp_selected_case = 'case_vfw'
+                        self.temperature_loop_count = self.temperature_loop_count + 1
+                        if self.temperature_loop_count == 3:
+                            print("repeat cmd exit")
+                            self.MisMatch_In_Comm()
+                    else:
+                        self.temperature_loop_count = 0
+                        print("else")
+                        self.temp_selected_case = 'case_mid'
+                except:
+                    pass
+        except SerialException:
+            self.TemperatureSensor_Time_Out()
+
+    def temp_mID_test(self):
+        try:
+            self.ser_wifi.open()
+            time.sleep(0.5)
+            if self.ser_wifi.is_open:
+                try:
+                    print(f"Sending command temp: mID")
+                    pin = 'mID'
+                    self.ser_wifi.write(f'{pin}\r'.encode('utf-8'))
+                    time.sleep(0.5)
+                    temp_flag_result=self.Temprature_Data()
+                    if temp_flag_result:
+                        self.temp_selected_case = 'case_mid'
+                        self.temperature_loop_count = self.temperature_loop_count + 1
+                        if self.temperature_loop_count == 3:
+                            self.MisMatch_In_Comm()
+                    else:
+                        self.temperature_loop_count = 0
+                        self.temp_selected_case = 'case_tth'
+                except:
+                    pass
+        except SerialException:
+            self.TemperatureSensor_Time_Out()
+
+    def temp_tTH_test(self):
+        try:
+            self.ser_wifi.open()
+            time.sleep(0.5)
+            if self.ser_wifi.is_open:
+                try:
+                    print(f"Sending command temp: tTH")
+                    pin = 'tTH'
+                    self.ser_wifi.write(f'{pin}\r'.encode('utf-8'))
+                    time.sleep(0.5)
+                    temp_flag_result=self.Temprature_Data()
+                    if temp_flag_result:
+                        self.temp_selected_case = 'case_tth'
+                        self.temperature_loop_count = self.temperature_loop_count + 1
+                        if self.temperature_loop_count == 3:
+                            self.MisMatch_In_Comm()
+                    else:
+                        self.temperature_loop_count = 0
+                        self.temp_selected_case = 'case_tbt' 
+                except:
+                    pass
+        except SerialException:
+            self.TemperatureSensor_Time_Out()
+
+    def temp_tBT_test(self):
+        try:
+            self.ser_wifi.open()
+            time.sleep(0.5)
+            if self.ser_wifi.is_open:
+                try:
+                    print(f"Sending command temp: tBT")
+                    pin = 'tBT'
+                    self.ser_wifi.write(f'{pin}\r'.encode('utf-8'))
+                    time.sleep(0.5)
+                    temp_flag_result=self.Temprature_Data()
+
+                    if temp_flag_result:
+                        self.temp_selected_case = 'case_tbt'
+                        self.temperature_loop_count = self.temperature_loop_count + 1
+                        if self.temperature_loop_count == 3:
+                            self.MisMatch_In_Comm()
+                    else:
+                        self.temperature_loop_count = 0
+                        self.temp_selected_case = 'case_tef'         
+                except:
+                    pass
+        except SerialException:
+            self.TemperatureSensor_Time_Out()
+    
+    def temp_tEF_test(self):
+        try:
+            self.ser_wifi.open()
+            time.sleep(0.5)
+            if self.ser_wifi.is_open:
+                try:
+                    print(f"Sending command temp: tEF")
+                    pin = 'tEF'
+                    self.ser_wifi.write(f'{pin}\r'.encode('utf-8'))
+                    time.sleep(0.5)
+                    temp_flag_result=self.Temprature_Data()
+                    if temp_flag_result:
+                        self.temp_selected_case = 'case_tef'
+                        self.temperature_loop_count = self.temperature_loop_count + 1
+                        if self.temperature_loop_count == 3:
+                            self.MisMatch_In_Comm()
+                    else:
+                        self.ser_wifi.close()
+                        self.temp_selected_case = 'case_final_flash'
+                except:
+                    pass
+        except SerialException:
+            self.TemperatureSensor_Time_Out()
+    
+    def temp_final_flash(self):
+        try:
+            self.ser.open()
+            time.sleep(0.5)
+            if self.ser.is_open:
+                try:
+                    print(f"Sending command final: temp final flash")
+                    self.ser.write("TSD00".encode('utf-8'))
+                    time.sleep(1)
+                    self.ser.write("TSDF1".encode('utf-8'))
+                    time.sleep(1)
+                    self.Final_pop_up_flash_temp()
+                    self.temperature_loop_count = 0
+                    self.temp_selected_case = 'exit'
+                    self.temp_save_flag = True
+                    self.temp_run_flg= False
+                    self.ser.close()
+                except:
+                    pass
+        except SerialException:
+            self.TemperatureSensor_Time_Out()
+
+######################################################  TEmperature function case end ##########################################################################################
+         
+################################################# TEmperature pop_up start ########################################################################################################################################333
+
+    def Temp_flash(self):
+        try:
+            self.msg = CTkMessagebox(title="Confirmation", message="Click Yes after Falshig BLE Temperature sensor",option_1='Yes',option_2='No')
+            if self.msg.get() == 'Yes':
+                self.ser.write("TSDF0".encode('utf-8'))
+                time.sleep(0.5)
+                self.msg.destroy()
+            elif self.msg.get() == 'No':
+                self.msg.destroy()
+        except:
+            pass
+
+    def pop_up_flash_temp(self):
+        try:
+            self.msg = CTkMessagebox(title="Confirmation", message="Click Yes and press Reset switch to Flash BLE Temperature Sensor",option_1='Yes',option_2='No')
+            if self.msg.get() == 'Yes':
+                self.ser.write("TSD01".encode('utf-8'))
+                time.sleep(1)
+                self.Temp_flash()
+                self.msg.destroy()
+            elif self.msg.get() == 'No':
+                self.msg.destroy()
+        except:
+            pass
+
+    def Final_Temp_flash(self):
+        try:
+            self.msg = CTkMessagebox(title="Confirmation", message="Click Yes after Falshig Final BLE Temperature sensor",option_1='Yes',option_2='No')
+            if self.msg.get() == 'Yes':
+                self.ser.write("TSDF0".encode('utf-8'))
+                time.sleep(0.5)
+                self.msg.destroy()
+            elif self.msg.get() == 'No':
+                self.msg.destroy()
+        except:
+            pass
+
+    def Final_pop_up_flash_temp(self):
+        try:
+            self.msg = CTkMessagebox(title="Confirmation", message="Click Yes and press Reset switch to Flash Final BLE Temperature Sensor",option_1='Yes',option_2='No')
+            if self.msg.get() == 'Yes':
+                self.ser.write("TSD01".encode('utf-8'))
+                time.sleep(1)
+                self.Final_Temp_flash()
+                self.msg.destroy()
+            elif self.msg.get() == 'No':
+                self.msg.destroy()
+        except:
+            pass
+   
+    def Time_out_POP_UP(self):
+        try:
+            self.msg = CTkMessagebox(title="Error", message="Connection Lost !!!", icon="cancel",option_1='Ok')
+            if self.msg.get() == 'Ok':
+               self.msg.destroy()
+            else:
+                self.msg.destroy()
+        except:
+            pass
+
+#############################################   pop_up end   ########################################################################################################################
+
+####################################### Command Sending section #################################################################################################################################
+    
+    def Send_Command(self):
+        global Event_t
+        Event_t = True
+        Event_temp = True
+        self.clear_array()
+        self.start_button.configure(state=customtkinter.DISABLED)
+      
+        # Put in dictionary key for each command of Wifi/Ble/Temperature/Lcd
+       
+        self.temp_selected_case = 'case_vfw'
+        self.temp_selected_volt = 'Case_temp_v_c_main'
+        
+       
+        temp_voltage_check = {
+            'Case_temp_v_c_main' : self.temp_3v_on,
+            'case_temp_v_c_sub':self.temp_voltage_check
+                             }
+
+        temp_cmd_dict = {
+            'case_vfw':self.temp_vFW_test,
+            'case_mid':self.temp_mID_test,
+            'case_tth':self.temp_tTH_test,
+            'case_tbt':self.temp_tBT_test,
+            'case_tef':self.temp_tEF_test,
+            'case_final_flash':self.temp_final_flash
+        }
+
+############################################ Command Sending section end #########################################################################
+
+        if  self.combobox_name == 'TEMPERATURE MODULE' and self.Save_serialName and self.Save_serialNumber:
+            self.temp_run_flg = False
+            self.temp_run_flg_volt = True
+            self.disconnect_flag_TS = True
+            self.temp_save_flag = False
+            
+            while Event_temp:
+
+                if self.temp_selected_case == 'exit':
+                        Event_temp = False
+                
+                if self.temp_selected_volt in  temp_voltage_check and  self.temp_run_flg_volt:
+                    temp_voltage_check[self.temp_selected_volt]()
+
+                if self.temp_selected_case in temp_cmd_dict and self.temp_run_flg:
+                        temp_cmd_dict[self.temp_selected_case]()
+
+            if self.temp_save_flag:
+                self.Parsing_priority()
+                self.Save_Data()
+                self.clear_text()     
+        else:
+            self.selector = CTkMessagebox(title="Confirmation", message=" Please Select Module Type",option_1='OK')
+            if self.selector.get() == 'OK':
+                self.selector.destroy()
+            self.start_button.configure(state=customtkinter.NORMAL)
+
+############################################# selcte test case moudel end ######################################################################################################
+
+################################################ Temp_volt_data start ##########################################################################################
+
+    def Temp_volt_data(self):
+        volt_Event = True
+        while volt_Event:
+            time.sleep(2)
+            print(self.ser.in_waiting)
+            if self.ser.in_waiting>0:
+                try:
+                    data_volt = self.ser.read_all().decode("utf-8").strip('\n').strip()
+                    print (data_volt)
+                    volt_decoded_list_a = data_volt
+                    volt_decoded_list = volt_decoded_list_a.split('\n')
+                    print("temp volt common--->",volt_decoded_list)
+
+                    if "COM-END" not in volt_decoded_list :
+                        self.Temp_volt_common_list.append(volt_decoded_list)
+                        self.Volt_Txt(volt_decoded_list)
+
+                    if "COM-END" in volt_decoded_list:
+                        volt_Event = False
+                        self.ser.close()
+                except:
+                   pass
+
+###################################### Temp_volt_data end  ##############################################################################################################
+
+####################################### volt Display ###############################################################################################################################
+    
+    def Volt_Txt(self,volt_filtered):
+        for values in volt_filtered:
+            self.textbox.insert(customtkinter.END,values)
+            self.textbox.insert(customtkinter.END,"\n")
+    
+############################################## Temprature_Data start ###################################################################################################  
+    
+    def Temprature_Data(self):
+        global TEMP_decoded_list
+        Temp_Event =  True
+        count = 0
+        while Temp_Event:
+            time.sleep(3)
+            print(self.ser_wifi.in_waiting)
+            if self.ser_wifi.in_waiting>0:
+                try:
+                    data_tmp = self.ser_wifi.read(self.ser_wifi.in_waiting).decode("utf-8").strip()
+                    TEMP_decoded_list_a = data_tmp.replace('\x00','').replace('\r','')
+                    TEMP_decoded_list = TEMP_decoded_list_a.split('\n')
+                    print("TEMP----->",TEMP_decoded_list)
+                    Temp_Event = False
+                    self.ser_wifi.close()
+                except:
+                    pass
+            else:
+                count = count + 1
+                print("DEBUG cnt->",count)
+                if count==5:
+                    self.ser_wifi.close()
+                    Temp_Event = False
+
+        if count == 5 or 'Invalid_Cmd' in TEMP_decoded_list or'retry' in TEMP_decoded_list or 'resultsCount: -2073.' in TEMP_decoded_list or 'No ID Found.' in TEMP_decoded_list:
+            return True
+        else:
+            self.temp_common_list.append(TEMP_decoded_list)
+            self.Temp_Display_Txt(TEMP_decoded_list)
+            return False
+        
+#########################################  Temprature_Data end ###########################################################################################################################################
+
+#########################################  Temprature_display start #######################################################################################################################################       
+    
+    def Temp_Display_Txt(self,temp_volt_filtered):
+        for values in temp_volt_filtered:
+            self.textbox.insert(customtkinter.END,values)
+            self.textbox.insert(customtkinter.END,"\n")
+
+##############################################  Temprature_display end ###############################################################################################################################################
+
+##############################################  resive data Parsing_priority start  ############################################################################################################################################ 
+    
+    def Parsing_priority(self):
+        self.Parsing_Module(0) # temperatuere volt
+        time.sleep(2)
+        self.Parsing_Module(1) # temperature data
+
+##################################################### resive data Parsing_priority end  ####################################################################################################
+
+################################################### temp volt  resive data Parsing_Module start ######################################################################################################
+    def Parsing_Module(self,arg):
+        if arg == 0:
+            result_dict = {f'TKey_{i}': sublist for i, sublist in enumerate(self.Temp_volt_common_list)}
+            for i,x in result_dict.items():
+                if i == 'TKey_0':
+                    dummy_d = x[0].split(':')
+                    self.temp_list_volt_description.append(dummy_d[0])
+                    self.temp_list_volt_val_ver.append(dummy_d[1])
+                    self.temp_list_volt_pf.append(x[2])
+                    self.temp_list_volt_min_max.append(x[1])
+                elif i == 'TKey_1':
+                    dummy_d = x[0].split(':')
+                    self.temp_list_volt_description.append(dummy_d[0])
+                    self.temp_list_volt_val_ver.append(dummy_d[1])
+                    self.temp_list_volt_pf.append(x[2])
+                    self.temp_list_volt_min_max.append(x[1])
+                elif i == 'TKey_2':
+                    dummy_d = x[0].split(':')
+                    self.temp_list_volt_description.append(dummy_d[0])
+                    self.temp_list_volt_val_ver.append(dummy_d[1])
+                    self.temp_list_volt_pf.append(x[2])
+                    self.temp_list_volt_min_max.append(x[1])
+                elif i == 'TKey_3':
+                    dummy_d = x[0].split(':')
+                    self.temp_list_volt_description.append(dummy_d[0])
+                    self.temp_list_volt_val_ver.append(dummy_d[1])
+                    self.temp_list_volt_pf.append(x[2])
+                    self.temp_list_volt_min_max.append(x[1])
+                elif i == 'TKey_4':
+                    dummy_d = x[0].split(':')
+                    self.temp_list_volt_description.append(dummy_d[0])
+                    self.temp_list_volt_val_ver.append(dummy_d[1])
+                    self.temp_list_volt_pf.append(x[2])
+                    self.temp_list_volt_min_max.append(x[1])
+                elif i == 'TKey_5':
+                    dummy_d = x[0].split(':')
+                    self.temp_list_volt_description.append(dummy_d[0])
+                    self.temp_list_volt_val_ver.append(dummy_d[1])
+                    self.temp_list_volt_pf.append(x[2])
+                    self.temp_list_volt_min_max.append(x[1])    
+
+################################################## temp volt resive data Parsing_Module end #################################################################################################################
+
+################################################## temp wifi resive data Parsing_Module start ############################################################################################################################ 
+        
+        if arg == 1:
+            #dummy_v=''
+            result_dict = {f'T_C_Key_{i}': sublist for i, sublist in enumerate(self.temp_common_list)}
+            for i,x in result_dict.items():
+                if i == 'T_C_Key_0':
+                    if 'PASS' in x[0]:
+                        pass_index = x[0].find('PASS')
+                        if pass_index != -1:
+                            version = x[0][:pass_index].strip()
+                            status = 'PASS'
+                            self.list_cmd_temp_description.append("Version")
+                            self.list_cmd_temp_val_ver.append(version)
+                            self.list_cmd_temp_pf.append(status)
+                    elif 'FAIL' in x[0]:
+                        pass_index = x[0].find('FAIL')
+                        if pass_index != -1:
+                            version = x[0][:pass_index].strip()
+                            status = 'FAIL'
+                            self.list_cmd_temp_description.append("Version")
+                            self.list_cmd_temp_val_ver.append(version)
+                            self.list_cmd_temp_pf.append(status)
+
+                elif i == 'T_C_Key_1':
+                    if 'PASS' in x[0]:
+                        pass_index = x[0].find('PASS')
+                        if pass_index != -1:
+                            version = x[0][:pass_index].strip()
+                            status = 'PASS'
+                            self.list_cmd_temp_description.append("MAC ID")
+                            self.list_cmd_temp_val_ver.append(version)
+                            self.list_cmd_temp_pf.append(status)
+                    elif 'FAIL' in x[0]:
+                        pass_index = x[0].find('FAIL')
+                        if pass_index != -1:
+                            version = x[0][:pass_index].strip()
+                            status = 'FAIL'
+                            self.list_cmd_temp_description.append("MAC ID")
+                            self.list_cmd_temp_val_ver.append(version)
+                            self.list_cmd_temp_pf.append(status)
+            
+                elif i== 'T_C_Key_2':
+                    dummy_v=''
+                    if "PASS" in x:
+                        dummy_v = x[0].split(':')
+                        self.list_cmd_temp_description.append(dummy_v[0])
+                        self.list_cmd_temp_val_ver.append(dummy_v[1])
+                        self.list_cmd_temp_pf.append('PASS')
+                    elif "FAIL" in x:
+                        dummy_v = x[0].split(':')
+                        self.list_cmd_temp_description.append(dummy_v[0])
+                        self.list_cmd_temp_val_ver.append(dummy_v[1])
+                        self.list_cmd_temp_pf.append('FAIL')
+
+                elif i== 'T_C_Key_3':
+                    if "PASS" in x:
+                        self.list_cmd_temp_description.append('BLE Transmission')
+                        self.list_cmd_temp_val_ver.append('')
+                        self.list_cmd_temp_pf.append('PASS')
+                    elif "FAIL" in x:
+                        self.list_cmd_temp_description.append('BLE Transmission')
+                        self.list_cmd_temp_val_ver.append('')
+                        self.list_cmd_temp_pf.append('FAIL')
+                
+                elif i== 'T_C_Key_4':
+                    if "PASS" in x:
+                        self.list_cmd_temp_description.append('External Flash BLE')
+                        self.list_cmd_temp_val_ver.append('')
+                        self.list_cmd_temp_pf.append('PASS')
+                    elif "FAIL" in x:
+                        self.list_cmd_temp_description.append('External Flash BLE')
+                        self.list_cmd_temp_val_ver.append('')
+                        self.list_cmd_temp_pf.append('FAIL')
+
+########################################## temp wifi resive data Parsing_Module end ################################################################################
+
+    def Out_Put_Report(self,output_list):
+        count_pass = 0
+        for x in output_list:
+            if x == 'PASS':
+                count_pass = count_pass+1
+        return count_pass
+        
+####################################  Temp save data in excel sheet start #####################################################################################  
+    
+    def Save_Data(self):
+        date_time=datetime.datetime.now()
+        self.End_time=date_time.strftime("%H:%M:%S")
+        self.save_time=date_time.strftime("%H-%M-%S")
+
+        list_A=["Employee No","Serial No"]
+        list_B =[f'{self.Employee_name}',f'{self.Serial_name}']
+       
+        count_pass_temp_volt = self.Out_Put_Report(self.temp_list_volt_pf)
+        count_pass_temp_ble =  self.Out_Put_Report(self.list_cmd_temp_pf)
+
+        check_total = lambda x, y : 'PASS' if x+y == 10 else 'FAIL' 
+        Result = check_total(count_pass_temp_volt,count_pass_temp_ble)
+        list_D = ['Date','Start_Time','End_Time','Result']
+        list_E = [f'{self.datetime}',f'{self.Start_time}',f'{self.End_time}',f'{Result}']
+        data1={}
+        for i in range (len(list_A)):
+            data1[list_A[i]]=[list_B[i]]
+        A01=pd.DataFrame(data1)
+        A01t=A01.transpose()
+
+        data2={}
+        for i in range (len(list_D)):
+            data2[list_D[i]]=[list_E[i]]
+        A02=pd.DataFrame(data2)
+        A02t= A02.transpose()
+
+        Temp_v_Description = {"Temperature Sensor Voltage REPORT":[" "]}
+        df_temp_volt_head = pd.DataFrame(Temp_v_Description)
+        Temp_Data_volt_df={"Test points":self.temp_list_volt_description,"Max and Min":self.temp_list_volt_min_max,"Value":self.temp_list_volt_val_ver,"Result":self.temp_list_volt_pf}
+        df_volt = pd.DataFrame(Temp_Data_volt_df)
+        Temp_cmd_Description = {"Temperature Sensor Functional REPORT":[" "]}
+        df_temp_head = pd.DataFrame(Temp_cmd_Description)
+        Temp_Cmd_data_df={"Description":self.list_cmd_temp_description,"Version/Value":self.list_cmd_temp_val_ver,"Result":self.list_cmd_temp_pf}
+        df_temp = pd.DataFrame(Temp_Cmd_data_df)
+
+        excel_file_path = f'D:\\BSD_Finel_Data\\Aaviza_Exc\\Aaviza_V_0.01\\Aaviza_Save\\Board_Level_Save\\TemperatureSensor_Save\\{self.Serial_name}_Temperature_Sensor_data_{self.save_time}_Result_{Result}.xlsx'
+        with pd.ExcelWriter(excel_file_path, engine='xlsxwriter') as writer:
+            A01t.to_excel(writer, header=False, index=True, startrow=0, startcol=0, sheet_name='Sheet1')
+            A02t.to_excel(writer, header=False, index=True, startrow=0, startcol=2, sheet_name='Sheet1')
+            df_temp_volt_head.to_excel(writer, sheet_name='Sheet1', index=False,startcol=1,startrow=4)
+            df_volt.to_excel(writer, sheet_name='Sheet1', index=False,startcol=0,startrow=5)
+            df_temp_head.to_excel(writer, sheet_name='Sheet1', index=False,startcol=1,startrow=13)
+            df_temp.to_excel(writer, sheet_name='Sheet1', index=False,startcol=0,startrow=14)
+
+        file_path = excel_file_path 
+
+        workbook = openpyxl.load_workbook(file_path)
+        sheet = workbook['Sheet1']
+        cell1=sheet['D4']
+        cell_text1=cell1.value
+        if 'FAIL' in cell_text1:
+            fill = PatternFill(start_color='FA4E2E',end_color='FA4E2E', fill_type='solid')
+            cell1.fill = fill
+        elif 'PASS' in cell_text1:
+            fill = PatternFill(start_color='00FF00',end_color='00FF00', fill_type='solid')
+            cell1.fill = fill
+        workbook.save(file_path) 
+
+        workbook = openpyxl.load_workbook(file_path)
+        sheet = workbook.active
+        for i in range(0,4):
+            column_index = i
+            max_length = 0
+            for cell in sheet[chr(65 + column_index)]:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except Exception as e:
+                    print(f"Error: {e}")
+                sheet.column_dimensions[chr(65 + column_index)].width = max_length + 2
+                workbook.save(file_path)
+    
+        self.clear_array()
+
+############################################ Temp save data in excel sheet end ########################################################################################## 
+
+############################################ clear_array ############################################################################################################################
+    
+    def clear_array(self):       
+
+        self.temp_common_list = []
+        self.list_cmd_temp_description = []
+        self.list_cmd_temp_val_ver = []
+        self.list_cmd_temp_pf = []
+        self.Temp_volt_common_list = []
+
+        self.temp_list_volt_description=[]
+        self.temp_list_volt_val_ver=[]
+        self.temp_list_volt_pf=[]
+        self.temp_list_volt_min_max=[]
+
+############################################# disconnect_action ###################################################################################################################################################################
+    
+    def disconnect_action(self):
+        
+        try:
+            self.ser.open()
+            time.sleep(0.2)
+            if self.disconnect_flag_TS:
+                self.temp_run_flg_volt = False
+                self.temp_run_flg = False
+                self.disconnect_flag_TS = False
+                self.temp_selected_case = 'exit'
+                self.ser.write("TSD00".encode('utf-8'))
+        except SerialException:
+            pass
+
+        self.connect_button.configure(state=customtkinter.NORMAL)
+        time.sleep(1)
+        self.ser.close()
+      
+    def MisMatch_In_Comm(self):
+        self.temp_run_flg_volt = False
+        self.temp_run_flg = False
+        self.temp_selected_case = 'exit'
+        self.clear_text()
+        self.clear_array()
+
+    
+    def clear(self):
+        try:
+            if self.ser.is_open:
+                print(f"Sending command volt: CLEAR")
+                pin = "CLEAR"
+                self.ser.write(f'{pin}'.encode('utf-8'))
+                time.sleep(0.5)
+                self.ser.close()
+            else:
+                try:
+                    if self.ser_wifi.is_open:
+                        time.sleep(0.2)
+                        self.ser_wifi.close()
+                     
+                except:
+                    pass
+        except:
+            pass
+        self.MisMatch_In_Comm()
+
+
+    def TemperatureSensor_Time_Out(self):
+        self.Time_out_POP_UP()
+        self.temp_run_flg_volt = False
+        self.temp_run_flg = False
+        self.temp_selected_case = 'exit'
+        try:
+            self.ser.close()
+            self.ser_wifi.close()
+            self.ser_ble.close()
+        except:
+            pass
+        self.clear_text()
+        self.clear_array()
+
+    def clear_text(self):
+        size  = self.textbox.size()
+        print(size)
+        self.textbox.delete('0.0','end')
+        self.start_button.configure(state=customtkinter.NORMAL)
+        self.combobox_port1.configure(state = customtkinter.NORMAL)
+        self.combobox_port2.configure(state = customtkinter.NORMAL)
+
+    def Send_Command_th(self):
+        ts = threading.Thread(target=self.Send_Command,daemon=False)  
+        ts.start()
+################################################### funtion end ###################################################################################################################################################################################
+
+if __name__=="__main__":
+    try:
+        comm_port=Serial_Communication()
+        comm_port.root.mainloop()
+    except:
+        pass
+
+############################################################ END #############################################################################################################################################################
+    
+    
+

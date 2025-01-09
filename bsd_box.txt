@@ -1,0 +1,1775 @@
+
+########################################################## START ####################################################################################3
+######################################################### IMPORT MOUDEL ########################################################################################
+import customtkinter 
+from tkinter import PhotoImage
+from PIL import Image
+from serial import *
+from tkinter import ttk
+from customtkinter import filedialog
+import serial,time
+from datetime import datetime
+import tkinter as tk
+from CTkMessagebox import CTkMessagebox
+from serial.tools import list_ports
+from CTkListbox import *
+import threading,os
+import datetime,serial.tools.list_ports 
+import pandas as pd
+import openpyxl
+from openpyxl.styles import PatternFill
+import os,glob
+from tkinter import Scrollbar
+############################################### MOUDEL END ################################################################################################################################################
+
+########################################## Designer Class ################################################################
+
+class DisplaySetting:
+    def __init__(self):
+        self.root = customtkinter.CTk() 
+        customtkinter.set_appearance_mode("light")
+        self.root.title("AAVIZA ELECTRONICS PRIVATE LIMITED")
+        self.ser = serial.Serial()
+        #self.x_com = serial_communications(self.root)
+        self.root.minsize(1024, 768)
+        self.image_path = 'D:/BSD_Finel_Data/Aaviza_Exc/Aaviza_V_0.01/Aaviza_Tool/Aaviza_Utility/logo4.png'
+        self.update_image()
+        self.combobox_name = ''
+
+        icon_path = os.path.join(os.path.dirname(__file__),'D:/BSD_Finel_Data/Aaviza_Exc/Aaviza_V_0.01/Aaviza_Tool/Aaviza_Utility/logo1.ico')
+        if os.path.exists(icon_path):
+            self.root.iconbitmap(icon_path)
+
+############################################################################################################################################################################################################
+        
+        self.Employee_name = customtkinter.CTkButton(self.root, text="EMPLOYEE ID    :",  width=170, height=30,font=("Times New Roman", 18, "bold"),fg_color="#DB4035")
+        self.Employee_name.place(x=10, y=270)
+        self.Serial_name = customtkinter.CTkButton(self.root, text="SERIAL No          :", width=170, height=30,font=("Times New Roman", 18, "bold"),fg_color="#DB4035")
+        self.Serial_name.place(x=10, y=310)
+        self.date_name = customtkinter.CTkButton(self.root, text="DATE                   :",width=170, height=30,font=("Times New Roman", 18, "bold"),fg_color="#DB4035")
+        self.date_name.place(x=10, y=350)
+        self.test_module = customtkinter.CTkButton(self.root, text="TEST_MODULE :",width=170, height=10,font=("Times New Roman", 18, "bold"),fg_color="#DB4035")
+        self.test_module.place(x=10, y=390)
+        self.test_module_com1 = customtkinter.CTkButton(self.root, text="COM1 :",width=170, height=10,font=("Times New Roman", 18, "bold"),fg_color="#DB4035")
+        self.test_module_com1.place(x=10, y=200)
+        """self.test_module_com2 = customtkinter.CTkButton(self.root, text="COM2 :",width=170, height=10,font=("Times New Roman", 18, "bold"),fg_color="#DB4035")
+        self.test_module_com2.place(x=10, y=180)
+        self.test_module_com3 = customtkinter.CTkButton(self.root, text="COM3 :",width=170, height=10,font=("Times New Roman", 18, "bold"),fg_color="#DB4035")
+        self.test_module_com3.place(x=10, y=220)"""
+        self.Employee_name1 = customtkinter.CTkEntry(self.root, placeholder_text="Enter Name")
+        self.Employee_name1.place(x=200, y=270)
+        self.Employee_name1.bind('<Return>', self.first_wizard_enter)
+        self.Serial_number = customtkinter.CTkEntry(self.root, placeholder_text="Enter Serial No")
+        self.Serial_number.place(x=200, y=310)
+        self.Serial_number.bind('<Return>', self.second_wizard_enter)
+        self.Date_name1 = customtkinter.CTkEntry(self.root, placeholder_text="Enter Date")
+        self.Date_name1.place(x=200, y=350)
+
+        
+#################################################### SELCTE MOUDEL START  #########################################################################
+
+        self.combobox_var = customtkinter.StringVar(value="BSD MODULE")
+        self.combobox = customtkinter.CTkComboBox(self.root, values=["BSD MODULE"],command=self.combobox_callback, variable=self.combobox_var)
+        self.combobox_var.set("SELECT")
+        self.combobox.place(x=200,y=390)
+
+        
+    def combobox_callback(self,choice):
+        self.combobox_name = self.combobox.get() 
+    
+    def first_wizard_enter(self,event):
+        try:
+            input_text = self.Employee_name1.get()
+            print(input_text)
+            if input_text != " ":
+                if  event.keysym == 'Return':
+                    self.Serial_number.delete(0, 'end')
+                    self.Serial_number.focus_set()
+                    return "break"
+        except:
+            pass
+            
+    def second_wizard_enter(self,event):
+        try:
+            input_text = self.Serial_number.get()
+            print(input_text)
+            if input_text != " ":
+                if  event.keysym == 'Return':
+                    self.Employee_name1.config(state='normal')
+                    self.Employee_name1.focus_set()
+        except:
+            pass
+
+    def copy_text(self):
+        try:
+            if self.Serial_number.tag_ranges(tk.SEL):
+                selected_text = self.Serial_number.get(tk.SEL_FIRST, tk.SEL_LAST)
+                self.Serial_number.clipboard_clear()
+                self.Serial_number.clipboard_append(selected_text)
+        except:
+            pass
+
+    def paste_text(self):
+        global time2
+        try:
+            clipboard_text = self.Serial_number.clipboard_get()
+            time2 = time.perf_counter()
+            print(time2)
+            if time2-time <1:
+                self.Serial_number.insert(tk.INSERT, clipboard_text)
+        except:
+            pass
+
+#################################################### SELCTE MOUDEL  END ###################################################################################################################################################
+                
+############################################################## update_image START  ##############################################################################################################################################   
+
+    def update_image(self):
+        self.my_image = customtkinter.CTkImage(light_image=Image.open(self.image_path), size=(330, 100))
+        self.image_label = customtkinter.CTkLabel(self.root, image=self.my_image, text="")
+        self.image_label.place(x=5, y=5)
+
+    def change_logo_action(self):
+        self.my_image = customtkinter.CTkImage(light_image=Image.open(self.image_path), size=(330, 100))
+        self.image_label = customtkinter.CTkLabel(self.root, image=self.my_image, text="")
+        self.image_label.place(x=5, y=5)
+
+###################################################### update_image END ###########################################################################
+
+############################################ Serial Communication class ##############################################################
+class serial_communications(DisplaySetting):
+    def __init__(self):
+        super().__init__()
+        self.comport_var1 = tk.StringVar()
+        self.user_ser = serial.Serial()
+        self.Wifi_ser=serial.Serial()
+        self.ser=serial.Serial()
+        self.comport_names1=[]
+        self.connection_flag = False
+        self.wifi_bx_common_list = []
+        self.ble_bx_common_list = []
+        self.list_wifi_description_bx = []
+        self.list_wifi_val_ver_bx = []
+        self.list_wifi_pf_bx = []
+        self.list_ble_description_bx  = []
+        self.list_bl_val_ver_bx = []
+        self.list_ble_pf_bx = []
+        self.wifi_loop_count = 0
+        self.ble_loop_count = 0
+        self.Save_serialNumber=False
+        self.Save_serialName=False
+
+#################################################################################################################################################################################################################################################
+        
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
+        self.Text_box = customtkinter.CTkTextbox(self.root, width=900,height=668,fg_color="#ffffff",font=("Times New Roman", 16),text_color="#000000")
+        self.Text_box.place(x=390, y=10)
+        self.ctk_textbox_scrollbar = customtkinter.CTkScrollbar(self.root, command=self.Text_box.yview)
+        self.ctk_textbox_scrollbar.grid(row=0, column=1, sticky="ns")
+        
+        self.connect_button = customtkinter.CTkButton(self.root, text=" CONNECT   ", width=200, height=30,font=("Times New Roman", 18, "bold"),fg_color="#4073FF", command=lambda:[self.connect_action(),self.print_selections()])
+        self.connect_button.place(x=100, y=460)
+        self.start_button = customtkinter.CTkButton(self.root, text=" START-TEST ", width=200, height=30,font=("Times New Roman", 18, "bold"),fg_color="#4073FF",command=self.Send_Command_th)
+        self.start_button.place(x=100, y=510)
+        self.stop_button = customtkinter.CTkButton(self.root, text=" DISCONNECT ", width=200, height=30,font=("Times New Roman", 18, "bold"),fg_color="#4073FF",command=self.disconnect_action)
+        self.stop_button.place(x=100, y=560)
+        self.root.configure(fg_color="#808080")
+        self.Combobox_display()
+
+################################################################################################################################################################################################################################################
+
+    def Combobox_display(self):
+        self.combobox_comp1 = customtkinter.StringVar(value="COM1")
+        self.combobox_port1 = customtkinter.CTkComboBox(self.root, values=self.get_available_comports(),command=self.com1_CallBack, variable=self.combobox_comp1)
+        self.combobox_comp1.set("SELECT")
+        self.combobox_port1.place(x=200,y=198)
+
+        """self.combobox_comp2 = customtkinter.StringVar(value="COM2")
+        self.combobox_port2 = customtkinter.CTkComboBox(self.root, values=self.get_available_comports(),command=self.com2_CallBack, variable=self.combobox_comp2)
+        self.combobox_comp2.set("SELECT")
+        self.combobox_port2.place(x=200,y=180)
+
+        self.combobox_comp3 = customtkinter.StringVar(value="COM3")
+        self.combobox_port3 = customtkinter.CTkComboBox(self.root, values=self.get_available_comports(),command=self.com3_CallBack, variable=self.combobox_comp3)
+        self.combobox_comp3.set("SELECT")
+        self.combobox_port3.place(x=200,y=220)"""
+    
+        self.refresh_button = customtkinter.CTkButton(self.root, text=" REFRESH ", width=100, height=20,font=("Times New Roman", 18, "bold"),fg_color="#4073FF",command=self.Refresh_ports)
+        self.refresh_button.place(x=10, y=110)
+
+        self.clear_button = customtkinter.CTkButton(self.root, text=" CLEAR ", width=100, height=20,font=("Times New Roman", 18, "bold"),fg_color="#4073FF",command=self.clear)
+        self.clear_button.place(x=130, y=110)
+
+    def combobox_callback(self,choice):
+        self.combobox_name = self.combobox.get() 
+
+
+    def com1_CallBack(self,choice):
+        self.comport1 = self.combobox_port1.get()
+        self.combobox_port1.configure(state = customtkinter.DISABLED)
+
+    """def com2_CallBack(self,choice):
+        self.comport2 = self.combobox_port2.get()
+        self.combobox_port2.configure(state = customtkinter.DISABLED)"""
+
+    """def com3_CallBack(self,choice):
+        self.comport3 = self.combobox_port3.get()
+        self.combobox_port3.configure(state = customtkinter.DISABLED)"""
+
+    def get_available_comports(self):
+        port_list = []
+        available_ports = list(serial.tools.list_ports.comports())
+        port_list = [port.device for port in available_ports]
+        print(port_list)
+        return port_list
+    
+    def Refresh_ports(self):
+        self.Combobox_display()
+        
+#######################################################################################################################################################################################################################
+
+    def connect_action(self):
+        self.comports = list_ports.comports()
+        self.comports = sorted(self.comports)
+        self.comport_names1=[]
+        port_count = 0
+        
+        try:
+            if self.comport1:
+                port_count = port_count+1
+                self.ser.port = f'{self.comport1}' 
+                self.ser.baudrate = 115200
+                self.ser.timeout = 3
+                self.ser.bytesize=serial.EIGHTBITS
+                self.ser.parity=serial.PARITY_NONE
+                self.ser.stopbits=serial.STOPBITS_ONE
+        except:
+            pass
+################################################# wifi comp/temp comp  ##############################################################3
+        """try:
+            if self.comport2:
+                port_count = port_count+1
+                self.Wifi_ser.port = f'{self.comport2}'         # as of now no need to return
+                self.Wifi_ser.baudrate = 115200
+                self.Wifi_ser.timeout = 3
+                self.Wifi_ser.bytesize=serial.EIGHTBITS
+                self.Wifi_ser.parity=serial.PARITY_NONE
+                self.Wifi_ser.stopbits=serial.STOPBITS_ONE  
+        except:
+            pass"""
+################################################ ble comp ##############################################################3
+        """try:
+            if self.comport3:
+                port_count = port_count+1    
+                self.ser.port = f'{self.comport3}' 
+                self.ser.baudrate = 115200
+                self.ser.timeout = 3
+                self.ser.bytesize=serial.EIGHTBITS
+                self.ser.parity=serial.PARITY_NONE
+                self.ser.stopbits=serial.STOPBITS_ONE
+        except:
+            pass"""
+        return  port_count
+########################################################################################################################################################################
+    
+    def print_selections(self):
+        try:
+            re_com = self.connect_action()
+            if re_com > 0 and re_com < 2:
+                self.Text_box.insert(customtkinter.END, "  PORTS STATUS      :  " + "Ports Connected" +'\n')
+            else:
+                time.sleep(0.2)
+                CTkMessagebox(title="AAVIZA ELECTRONICS PRIVATE LIMITED", message="Ports not connected")
+
+            self.Employee_name=self.Employee_name1.get()
+            self.Name_Feild_Check(self.Employee_name)
+
+            print("Name_status",self.Save_serialName)
+
+            self.Serial_name= self.Serial_number.get()
+            self.SerialNumber_Feild_Check(self.Serial_name)
+
+            print("Serial_status",self.Save_serialName)
+            self.now = datetime.datetime.now()
+            self.datetime_var = tk.StringVar(value=self.now.strftime("%d-%m-%Y"))
+            self.datetime_var1 = tk.StringVar(value=self.now.strftime("%H:%M:%S"))
+            self.Start_time = self.datetime_var1.get()
+            self.datetime = self.datetime_var.get()
+        
+            if  self.Save_serialName and self.Save_serialNumber:
+                self.Text_box.insert(customtkinter.END, "  EMPLOYEE ID        :  "  +        self.Employee_name  + '.'+'\n')
+                self.Text_box.insert(customtkinter.END, "  SERIAL NO             :  "  +        self.Serial_name    + '.'+'\n')
+                self.Text_box.insert(customtkinter.END, "  TEST MODULE       :  "  +       self.combobox_name    + '.'+'\n')
+                self.Text_box.insert(customtkinter.END, "  DATE                       :  "  +        self.datetime      + '.'+'\n')
+                self.Text_box.insert(customtkinter.END, "  START-TIME        :  "  +        self.Start_time      + '.'+'\n')
+                self.Text_box.insert(customtkinter.END,"\n")
+                self.connect_button.configure(state=customtkinter.DISABLED)
+            else:
+                self.clear_text()
+                self.connect_button.configure(state=customtkinter.NORMAL)
+        except:
+            pass
+#############################################################################################################################################################
+
+##########################################################################################################################################################################
+    def SerialNumber_Feild_Check(self,valueSerial):
+        if valueSerial == '':
+            time.sleep(0.5)
+            CTkMessagebox(title="Check Entry Feild",message="Invalid Serial Number")
+            time.sleep(0.5)
+            self.connect_button.configure(state=customtkinter.NORMAL)
+            self.Save_serialNumber=False
+            try:
+                self.ser.close()
+            except:
+                pass
+        else:
+            self.Save_serialNumber=True
+        
+    def Name_Feild_Check(self,valueName):
+        if valueName =='':
+            time.sleep(0.5)
+            CTkMessagebox(title="Check Entry Feild",message="Invalid Name")
+            time.sleep(0.5)
+            self.connect_button.configure(state=customtkinter.NORMAL)
+            self.Save_serialName=False
+            try:
+                self.ser.close()
+
+            except:
+                pass
+        else:
+            self.Save_serialName=True
+           
+         
+
+####################################### POP UP START ############################################################################################################################################
+
+    def Time_out_POP_UP(self):
+        try:
+            time.sleep(0.5)
+            self.msg = CTkMessagebox(title="Error", message="Connection Lost!!!", icon="cancel",option_1='Ok')
+            time.sleep(0.5)
+            if self.msg.get() == 'Ok':
+               self.msg.destroy()
+            else:
+                self.msg.destroy()
+        except:
+            pass
+
+############################################################# end #################################################################################################
+
+############################################################# ota pop up  start ##########################################################################################################
+    def OTA_update(self):#OTA_Pop_up
+        try:
+            time.sleep(0.5) 
+            msg = CTkMessagebox(title="OTA_Update", message="Click OK For OTA Update", option_1='OK')
+            time.sleep(0.5)
+            if msg.get() == "OK":
+                msg.destroy()
+        except:
+            pass
+
+    def OTA_Pop_up(self):#OTA_Pop_up
+        try:
+            list_ota=[]
+            pass_flag = False 
+            msg = CTkMessagebox(title="OTA_Successful", message="Click Yes after successful OTA Update", option_2='YES',option_1='NO')
+            time.sleep(0.5)
+            if msg.get() == "YES":
+                    pass_flag=True
+                    msg.destroy()
+            elif msg.get() == "NO" :
+                pass_flag=False
+                msg.destroy()
+                
+            if pass_flag:
+                list_ota.append('OTA_update')
+                list_ota.append('PASS')
+                self.wifi_bx_common_list.append(list_ota)
+                #self.ser.close()
+            else:
+                list_ota.append('OTA_update')
+                list_ota.append('FAIL')
+                self.wifi_bx_common_list.append(list_ota)
+        except:
+            pass
+
+
+############################################## POP UP END ####################################################################################################
+
+############################################## BUTTON FUNTION ###############################################################################################################
+    
+    def button_click_event(self):
+        try:
+            dialog = customtkinter.CTkInputDialog(text=" UserName Password :", title="wifi UserName Password:")
+            name = dialog.get_input().strip()
+            print("wifiUserName Password:", name)
+            time.sleep(0.5)
+            if name!='':
+                self.ser.open()
+                time.sleep(1)
+                self.ser.write(f'{name}\r'.encode('utf-8'))
+                time.sleep(5)                                                       
+                value,string_value=self.Wifi_bx_lvl_data(10,1)
+                print("----->>",value,string_value)
+
+                if value and string_value == 'xxx':
+                    print("pass") 
+                    self.wifi_loop_count = 0
+                    self.box_wifi_select = 'bx_wifi_case4'
+
+                elif value and string_value == 'Press':
+                    self.call_dummy_wifi()
+
+                else:
+                    self.box_wifi_select = 'bx_wifi_case3'
+                    self.wifi_loop_count = self.wifi_loop_count + 1
+                    if self.wifi_loop_count ==2:
+                        self.MisMatch_WB_In_Comm()
+        except:
+            pass
+
+############################################## BUTTON FUNCATIONS END ################################################################################################################################
+    
+################################################# REBOOT FUNCATION START  ############################################################################################################################################3
+                    
+    def Reboot(self):
+
+        self.ser.open()
+        time.sleep(1)
+        if self.ser.is_open:
+            print("sending Reboot")
+            pin = 'R\r'
+            self.ser.write(f'{pin}'.encode('utf-8'))
+        
+            time.sleep(1)
+            value = self.Reboot_Data()
+            try:
+                if value:
+                    time.sleep(0.5)
+                    msg = CTkMessagebox(icon='check',title="Reboot Status", message="Reboot Successful. Click Yes to continue", option_1="Yes", option_2="No")
+                    time.sleep(0.5)
+                    if msg.get() == "No":
+
+                        self.boot_device_or_Exit = 'Exit'
+                        self.reboot_flag = False
+                    else:
+                        time.sleep(0.5)
+                        msg = CTkMessagebox(title="Information", message="click Wifi for wifi Data or BLE for bluetooth Data", option_1="WIFI",option_2='BLE')
+                        time.sleep(0.5)
+                        if msg.get() == "WIFI":
+                            self.box_lvl_wifi_flag  = True
+                            self.box_wifi_select = 'box_wifi_comm'
+                            self.reboot_flag = False
+                            self.box_lvl_ble_flag  = False
+                        elif msg.get() == "BLE" :
+                            self.box_lvl_ble_flag  = True
+                            self.box_ble_select = 'box_ble_comm'
+                            self.reboot_flag = False
+                            self.box_lvl_wifi_flag  = False
+                else:
+                    time.sleep(0.5)
+                    msg = CTkMessagebox(title="Reboot Status", message="Reboot Unsuccessful. Click Yes to abort", option_1="Yes")
+                    time.sleep(0.5)
+                    if msg.get() == "Yes":
+                        self.boot_device_or_Exit = 'Exit'
+                        self.reboot_flag = False
+                        self.box_lvl_wifi_flag  = False
+            except:
+                pass
+
+############################################ REBOOT FUNTIONS END #################################################################################################
+
+########################################### SELECTON OPATIONS #########################################################################################################
+    def Selection_wifi(self):
+        try:
+            self.ser.open()
+            if self.ser.is_open:
+                pin = '1\r'
+                print('sending wifi selected')
+                self.ser.write(f'{pin}'.encode('utf-8'))
+                time.sleep(1)
+                value = self.selection_dummy_call_wifi_Ble(10)
+                if value:
+                    self.box_wifi_select = 'bx_wifi_case1'
+                else:
+                    self.Selection_wifi()
+        except:
+            pass
+
+    def Selection_ble(self):
+        try:
+            self.ser.open()
+            if self.ser.is_open:
+                pin = '2\r'
+                print('sending ble selected')
+                self.ser.write(f'{pin}'.encode('utf-8'))
+                time.sleep(1)
+                value = self.selection_dummy_call_wifi_Ble(10)
+                print(value)
+                if value:
+                    self.box_ble_select = 'box_ble_case1'
+                else:
+                    self.Selection_ble()
+        except:
+            pass
+
+    
+    def call_dummy_wifi(self):
+        try:
+            self.ser.open()
+            if self.ser.is_open:
+                pin = '1\r'
+                print('sending wifi selected')
+                self.ser.write(f'{pin}'.encode('utf-8'))
+                time.sleep(1)
+                value = self.selection_dummy_call_wifi_Ble(10)
+                if value:
+                    self.box_wifi_select = 'bx_wifi_case3'
+                else:
+                    pass
+        except:
+            pass
+
+###############################################################################################################################################################
+
+####################################### Wifi Functions SATRT ##################################################################    
+
+    def Box_lvl_wCC_test(self):
+        try:
+            self.ser.open()
+            time.sleep(1)
+            if self.ser.is_open:
+                pin = 'wCC\r'
+                print('sending wCC')
+                self.ser.write(pin.encode('utf-8'))
+                value,string_value = self.Wifi_bx_lvl_data(10,0)
+                if value and string_value=="xxx":
+                    self.box_wifi_select = 'bx_wifi_case1'
+                    self.wifi_loop_count = self.wifi_loop_count + 1
+                    if self.wifi_loop_count == 2:
+                        self.MisMatch_WB_In_Comm()    
+                else:
+                    self.wifi_loop_count =0
+                    self.box_wifi_select = 'bx_wifi_case2'
+        except SerialException:
+            self.BSD_Box_Time_Out()
+    
+    def Box_lvl_bWF_test(self):
+        try:
+            self.ser.open()
+            time.sleep(1)
+            if self.ser.is_open:
+                pin = 'bWF\r'
+                print('sending bWF')
+                self.ser.write(f'{pin}'.encode('utf-8'))
+                time.sleep(1)
+                self.check_visually(1)
+                time.sleep(15)
+                self.ser.close()
+                self.box_wifi_select = 'bx_wifi_case3'
+                time.sleep(1)
+                print("closed..")
+        except SerialException:
+            self.BSD_Box_Time_Out()
+    
+    def Box_lvl_wSD_test(self):
+        try:
+            self.ser.open()
+            time.sleep(1)
+            if self.ser.is_open:
+
+                print('sending wSD')
+                self.ser.write('wSD\r'.encode('utf-8'))
+                time.sleep(1)
+                value,string_value = self.Wifi_bx_lvl_data(10,1)
+                print('------------>',value,string_value)
+                if value and string_value == 'Press':
+                    self.call_dummy_wifi()
+                elif value and string_value == "xxx":
+                    self.button_click_event()    
+                else:
+                    self.box_wifi_select = 'bx_wifi_case3'
+        except SerialException:
+            self.BSD_Box_Time_Out()
+
+    def Box_lvl_bTM_test(self):
+        try:
+            self.ser.open()
+            time.sleep(1)
+            if self.ser.is_open:
+                pin = 'bTM\r'
+                print('sending bTM')
+                self.ser.write(f'{pin}'.encode('utf-8'))
+                time.sleep(1)
+                value,string_value = self.Wifi_bx_lvl_data(150,2) # change to 10
+                print('------------>',value,string_value)
+                if value and string_value == 'xxx':
+                    print('btm')
+                    self.wifi_loop_count = 0
+                    #self.wifi_loop_count = 0
+                    """ self.reboot_flag = False
+                    self.box_lvl_wifi_flag = False
+                    self.box_lvl_ble_flag = False
+                    self.boot_device_or_Exit = 'Exit'
+                    self.run_flag = False 
+                    self.save_flag  = True
+                    self.Editing(1)"""
+                    self.box_wifi_select = 'bx_wifi_case5'
+
+                else:
+                    self.box_wifi_select = 'bx_wifi_case4'
+                    self.wifi_loop_count = self.wifi_loop_count + 1
+                    if self.wifi_loop_count == 8:
+                        self.MisMatch_WB_In_Comm()
+        except SerialException:
+            self.BSD_Box_Time_Out()
+
+###################################################### Wifi Functions END ##############################################################################################
+
+######################################################  OTA funtions start #######################################################################################################
+    def Box_lvl_ota_test(self):
+        try:
+            self.ser.open()
+            time.sleep(1)
+            if self.ser.is_open:
+                print('sending OTA')
+                self.OTA_update()
+                self.ser.write('OTA\r'.encode('utf-8'))
+                time.sleep(1)
+                value,string_value = self.Wifi_bx_lvl_data(150,3)
+                print('------------>',value,string_value)
+                if value and string_value == 'xxx':
+                    self.OTA_Pop_up()
+                    self.wifi_loop_count = 0
+                    self.reboot_flag = False
+                    self.box_lvl_wifi_flag = False
+                    self.box_lvl_ble_flag = False
+                    self.boot_device_or_Exit = 'Exit'
+                    self.run_flag = False 
+                    self.save_flag  = True
+                    self.Editing(1)
+                else: 
+                    self.box_wifi_select = 'bx_wifi_case5'
+                    self.wifi_loop_count = self.wifi_loop_count + 1
+                    if self.wifi_loop_count == 3:
+                        self.MisMatch_WB_In_Comm()
+        except:
+            pass
+    
+############################################### OTA funtions end ##################################################################################
+            
+############################################ BLE START  #######################################################################################################
+    
+    def Box_ble_bCC_test(self):
+        try:
+            self.ser.open()
+            time.sleep(1)
+            if self.ser.is_open:
+                pin = 'bCC\r'
+                print('sending bCC')
+                self.ser.write(f'{pin}'.encode('utf-8'))
+                time.sleep(1)
+                value,string_value = self.Ble_bx_lvl_data(10,0)
+                print('------------>',value,string_value)
+
+                if value and string_value == 'xxx':
+                    self.ble_loop_count = self.ble_loop_count + 1
+                    self.box_ble_select = 'box_ble_case1'
+                    if self.ble_loop_count == 2:
+                        self.MisMatch_WB_In_Comm()
+                else:
+                    self.ble_loop_count = 0
+                    self.box_ble_select = 'box_ble_case2'
+        except SerialException:
+            self.BSD_Box_Time_Out()
+                            
+    
+    def ble_bLS_test(self):
+        try:
+            self.ser.open()
+
+            if self.ser.is_open:
+                pin = 'bLS\r'
+                print('sending bLS')
+                self.ser.write(f'{pin}'.encode('utf-8'))
+                time.sleep(1)
+                self.check_visually(2)
+                self.box_ble_select = 'box_ble_case3'
+                self.ser.close()
+        except SerialException:
+            self.BSD_Box_Time_Out()
+
+    def ble_bLB_test(self):
+        try:  
+            self.ser.open()
+
+            if self.ser.is_open:
+                pin = 'bLB\r'
+                print('sending bLB')
+                self.ser.write(f'{pin}'.encode('utf-8'))
+                time.sleep(1)
+                self.check_visually(3)
+                self.box_ble_select = 'box_ble_case4'
+                self.ser.close()
+        except SerialException:
+            self.BSD_Box_Time_Out()
+    
+    def ble_bLD_test(self):
+        try:  
+            self.ser.open()
+            time.sleep(3)
+            if self.ser.is_open:
+
+                print('sending bLD')
+                self.ser.write('bLD\r'.encode('utf-8'))
+                time.sleep(1)
+                self.check_visually(4)
+                self.box_ble_select = 'box_ble_case5'
+                self.ser.close()
+        except SerialException:
+            self.BSD_Box_Time_Out()
+            
+        
+    def ble_bBZ_test(self):
+        try:
+            self.ser.open()
+            if self.ser.is_open:
+
+                print('sending bBZ')
+                self.ser.write(f'bBZ\r'.encode('utf-8'))
+                time.sleep(1)
+                self.check_visually(5)
+                self.box_ble_select = 'box_ble_case6'
+                self.ser.close()
+        except SerialException:
+            self.BSD_Box_Time_Out()
+        
+
+    def ble_bCG_test(self):
+        try:
+            self.ser.open()
+            time.sleep(1)
+            if self.ser.is_open:
+                pin = 'bCG\r'
+                print('sending bCG')
+
+                self.ser.write(f'{pin}'.encode('utf-8'))
+                time.sleep(1)
+                value,string_value = self.Ble_bx_lvl_data(10,0)
+                print('------------>',value,string_value)
+                if value and string_value == 'xxx':
+                    self.ble_loop_count = self.ble_loop_count + 1
+                    self.box_ble_select = 'box_ble_case6'
+                    if self.ble_loop_count == 2:
+                        self.MisMatch_WB_In_Comm()
+
+                else:
+                    self.ble_loop_count = 0
+                    self.box_ble_select = 'box_ble_case7'
+        except SerialException:
+            self.BSD_Box_Time_Out()
+
+    def ble_bBS_test(self):
+        try:
+            self.ser.open()
+            time.sleep(1)
+            if self.ser.is_open:
+                pin = 'bBS\r'
+                print('sending bBS')
+                self.check_visually(6)
+                self.ser.write(f'{pin}'.encode('utf-8'))
+                time.sleep(1)
+                value,string_value = self.Ble_bx_lvl_data(10,0)
+ 
+                if value and string_value == 'xxx':
+                    self.ble_loop_count = self.ble_loop_count + 1
+                    self.box_ble_select = 'box_ble_case7'
+                    if self.ble_loop_count ==2:
+                        self.MisMatch_WB_In_Comm()      
+                else:
+                    self.ble_loop_count = 0
+                    self.box_ble_select = 'box_ble_case8'
+        except SerialException:
+            self.BSD_Box_Time_Out()
+                    
+    
+    def ble_bS1_test(self):
+        try:
+            time.sleep(10)
+            self.ser.open()
+            time.sleep(1)
+            if self.ser.is_open:
+                pin = 'bS1\r'
+                self.check_visually(7)
+                time.sleep(5)
+                self.ser.write(f'{pin}'.encode('utf-8'))
+                time.sleep(1)
+                self.Buttons(0,10)
+                self.box_ble_select = 'box_ble_case9'
+        except SerialException:
+            self.BSD_Box_Time_Out()
+            
+
+    def ble_bS2_test(self):
+        try:
+            self.ser.open()
+            time.sleep(1)
+            if self.ser.is_open:
+                pin = 'bS2\r'
+
+                self.check_visually(8)
+                time.sleep(5)
+                self.ser.write(f'{pin}'.encode('utf-8'))
+                time.sleep(1)
+                self.Buttons(0,10)
+                self.box_ble_select = 'box_ble_case10'
+        except SerialException:
+            self.BSD_Box_Time_Out()
+            
+
+    def ble_bS3_test(self):
+        try:
+            self.ser.open()
+            time.sleep(1)
+            if self.ser.is_open:
+                pin = 'bS3\r'
+
+                self.check_visually(9)
+                time.sleep(5)
+                self.ser.write(f'{pin}'.encode('utf-8'))
+                time.sleep(1)
+                self.Buttons(0,10)
+                self.Editing(0)
+                self.boot_device_or_Exit = 'Reboot'
+                self.box_lvl_wifi_flag = False
+                self.reboot_flag = True
+                self.box_lvl_ble_flag = False
+        except SerialException:
+            self.BSD_Box_Time_Out() 
+
+###################################################### BLE END ####################################################################################################  
+
+############################################# SEND COMMAND FUNCATIONS START  #############################################################################################   
+    
+    def Send_Command(self):
+        global Event
+        Event = True
+
+        self.start_button.configure(state=customtkinter.DISABLED) 
+        
+        # rebooting the device (1)
+        self.boot_device_or_Exit = 'Reboot' 
+        reboot_dict = {'Reboot':self.Reboot}
+        # Wifi test (2)
+        self.box_wifi_select = 'box_wifi_comm'
+        box_wifi_dict = {'box_wifi_comm':self.Selection_wifi,
+                        'bx_wifi_case1':self.Box_lvl_wCC_test,  
+                        'bx_wifi_case2':self.Box_lvl_bWF_test,
+                        'bx_wifi_case3':self.Box_lvl_wSD_test,
+                        'bx_wifi_case4':self.Box_lvl_bTM_test,
+                        'bx_wifi_case5':self.Box_lvl_ota_test
+                        
+                        } #bx_wifi_case5:self.Box_lvl_ota_test
+        # ble test (3)
+        self.box_ble_select = 'box_ble_comm'
+        box_ble_dict={
+                            'box_ble_comm':self.Selection_ble,
+                            'box_ble_case1':self.Box_ble_bCC_test,
+                            'box_ble_case2':self.ble_bLS_test,  
+                            'box_ble_case3':self.ble_bLB_test,  
+                            'box_ble_case4':self.ble_bLD_test, 
+                            'box_ble_case5':self.ble_bBZ_test,
+                            'box_ble_case6':self.ble_bCG_test, 
+                            'box_ble_case7':self.ble_bBS_test,
+                            'box_ble_case8':self.ble_bS1_test,
+                            'box_ble_case9':self.ble_bS2_test,
+                            'box_ble_case10':self.ble_bS3_test
+                        }
+        
+######################################## SEND COMMAND FUNCATIONS END ################################################################################################
+
+######################################## selcte test case moudel start #########################################################################################################3
+        
+        self.reboot_flag = True
+        self.box_lvl_wifi_flag = False
+        self.box_lvl_ble_flag = False
+        self.run_flag = True
+        self.save_flag = False
+        
+        if self.run_flag:
+            while Event:
+
+                if self.boot_device_or_Exit == 'Exit':
+                    Event = False
+
+                if self.boot_device_or_Exit in reboot_dict and self.reboot_flag:
+                    reboot_dict[self.boot_device_or_Exit]()  
+
+                if self.box_wifi_select in box_wifi_dict and self.box_lvl_wifi_flag:
+                    box_wifi_dict[self.box_wifi_select]()
+
+                if self.box_ble_select in box_ble_dict and self.box_lvl_ble_flag:
+                    box_ble_dict[self.box_ble_select]()
+            self.start_button.configure(state=customtkinter.NORMAL)
+
+        if self.save_flag :
+            self.save_data()
+
+######################################## selcte test case moudel END #####################################################################################################
+            
+################################################################## Reboot data #################################################################################
+        
+    def Reboot_Data(self):
+        self.Text_box.insert(customtkinter.END,"Booting in Progress.....")
+        self.Text_box.insert(customtkinter.END,'\n')
+        time.sleep(3)
+        count = 0
+        try:
+            data_reboot  = ''
+            while self.ser.in_waiting == 0 and count < 5:
+                time.sleep(1)
+                count = count+ 1                                
+
+            if self.ser.in_waiting > 0:
+                data_reboot = self.ser.read(self.ser.in_waiting).decode('utf-8').strip()
+                data_reboot = data_reboot.split('\n')
+                print(data_reboot)
+                self.ser.close()
+        except SerialException:
+            self.ser.close()
+            self.start_button.configure(state=customtkinter.NORMAL)
+        if count == 5:
+            count = 0
+            self.start_button.configure(state=customtkinter.NORMAL)
+            self.ser.close()
+        for search in data_reboot:
+            search = search.replace('\00x','').replace('\r','')
+
+            if search.startswith('Press'):
+                return True
+        return False
+    
+#########################################################################################################################################################################################
+    
+########################################### dummy seletion box lvl Data ##################################################################################################
+    
+    def selection_dummy_call_wifi_Ble(self,arg):
+        count = 0
+        try:
+            while self.ser.in_waiting == 0 and count < arg:
+                time.sleep(1)
+                count = count+ 1  
+
+  
+            if self.ser.in_waiting > 0:
+                self.data_wifi_ble_dummy = self.ser.read(self.ser.in_waiting).decode('utf-8').strip()
+                self.data_wifi_ble_dummy = self.data_wifi_ble_dummy.replace('\x00','').replace('\r','')
+                self.data_wifi_ble_dummy = self.data_wifi_ble_dummy.split('\n')
+
+                self.ser.close()
+        except:
+            pass
+        if count == arg:
+            count = 0
+            self.start_button.configure(state=customtkinter.NORMAL)
+            self.ser.close()
+
+        for item in self.data_wifi_ble_dummy:
+            if item.startswith('Test Started') or item.startswith('BLE BOX testing selected'):
+                print('--->',item)
+                return True
+        return False
+    
+#######################################################################################################################################################################################
+
+########################################### BLE box lvl Data ########################################################################################################
+    
+    def Ble_bx_lvl_data(self,arg,argg):
+        time.sleep(1)
+        if argg == 0:
+            list_temp = []
+            count = 0
+            try:
+                while self.ser.in_waiting == 0 and count < arg:
+                    time.sleep(1)
+                    count = count+ 1  
+
+                if self.ser.in_waiting > 0:
+                    self.data_ble_bx_lvl = self.ser.read(self.ser.in_waiting).decode('utf-8').strip()
+                    self.data_ble_bx_lvl = self.data_ble_bx_lvl.replace('\x00','').replace('\r','')
+                    self.data_ble_bx_lvl = self.data_ble_bx_lvl.split('\n')
+
+                    for k in self.data_ble_bx_lvl:
+                        if k != 'Invalid_Cmd':
+                            list_temp.append(k)
+                    self.ble_bx_common_list.append(list_temp)
+
+                    self.Display_Box_lvl_wifi_txt(list_temp)
+
+                self.ser.close()
+
+            except:
+                pass
+            if count == arg:
+                count = 0
+                self.start_button.configure(state=customtkinter.NORMAL)
+                self.ser.close()
+
+            for i in self.data_ble_bx_lvl:
+                if i.startswith('Invalid_Cmd') : #or i.startswith('FAIL'):
+                    return True,"xxx"
+            return False,"xxx"
+        
+##################################################################################################################################################################3       
+    
+    def Buttons(self,argg,arg):
+         if argg == 0:
+            list_temp = []
+            count = 0
+            try:
+                while self.ser.in_waiting == 0 and count < arg:
+                    time.sleep(1)
+                    count = count+ 1  
+
+                if self.ser.in_waiting > 0:
+                    self.data_ble_bx_lvl = self.ser.read(self.ser.in_waiting).decode('utf-8').strip()
+                    self.data_ble_bx_lvl = self.data_ble_bx_lvl.replace('\x00','').replace('\r','')
+                    self.data_ble_bx_lvl = self.data_ble_bx_lvl.split('\n')
+                    for k in self.data_ble_bx_lvl:
+                        if k != 'Invalid_Cmd':
+                            list_temp.append(k)
+                    self.ble_bx_common_list.append(list_temp)
+                    self.Display_Box_lvl_wifi_txt(list_temp)
+
+                self.ser.close()
+            except:
+                pass
+
+            if count == arg:
+                count = 0
+                self.start_button.configure(state=customtkinter.NORMAL)
+                self.ser.close()
+
+########################################## wifi box lvl Data ########################################################################################################################   
+    
+    def Wifi_bx_lvl_data(self,arg,argg):
+        time.sleep(3)
+
+        if argg == 0:
+            list_temp = []
+            count = 0
+            try:
+                while self.ser.in_waiting == 0 and count < arg:
+                    time.sleep(1)
+                    count = count+ 1  
+
+                if self.ser.in_waiting > 0:
+                    self.data_wifi_bx_lvl = self.ser.read(self.ser.in_waiting).decode('utf-8').strip()
+                    self.data_wifi_bx_lvl = self.data_wifi_bx_lvl.replace('\x00','').replace('\r','')
+                    self.data_wifi_bx_lvl = self.data_wifi_bx_lvl.split('\n')
+
+
+                    for k in self.data_wifi_bx_lvl:
+                        if k != 'Invalid_Cmd':
+                            list_temp.append(k)
+                    self.wifi_bx_common_list.append(list_temp)
+                    self.Display_Box_lvl_wifi_txt(list_temp)
+                self.ser.close()
+
+            except:
+                pass
+            if count == arg:
+                count = 0
+                self.start_button.configure(state=customtkinter.NORMAL)
+                self.ser.close()
+            for i in self.data_wifi_bx_lvl:
+                if i.startswith('Invalid_Cmd'):
+                    return True,"xxx"
+            return False,"xxx"
+        
+        if argg == 1:
+            count = 0
+            list_local = []
+            self.data_wifi_bx_lvl_ssid=''
+            try:
+                while self.ser.in_waiting == 0 and count < arg:
+                    time.sleep(1)
+                    count = count+ 1  
+                if  self.ser.in_waiting > 0:
+                    self.data_wifi_bx_lvl_ssid = self.ser.read(self.ser.in_waiting).decode('utf-8').strip()
+                    self.data_wifi_bx_lvl_ssid = self.data_wifi_bx_lvl_ssid.replace('\x00','').replace('\r','')
+                    self.data_wifi_bx_lvl_ssid = self.data_wifi_bx_lvl_ssid.split('\n')
+                     
+                self.ser.close()
+               
+            except:
+                self.ser.close()
+            for item in self.data_wifi_bx_lvl_ssid:
+                if item.startswith('Enter SSID Password.') or item.startswith('PASS'):
+                    if item == 'PASS':
+                        list_local.append("Verified Entered SSID")
+                        list_local.append('PASS')
+                    elif item == 'FAIL':
+                        list_local.append("Verified Entered SSID")
+                        list_local.append('FAIL')
+                    self.wifi_bx_common_list.append(list_local)
+                    self.Display_Box_lvl_wifi_txt(list_local)
+                    return True,'xxx'
+                if item.startswith('Press') or item.startswith('Provisioning'):
+                    return True,"Press"
+            return False,'xxx'
+        
+        if argg == 2:
+            count = 0
+            self.data_bTM_bx_lvl = ''
+            try:
+                while self.ser.in_waiting == 0 and count < arg:
+                    time.sleep(1)
+                    count = count+ 1  
+                if  self.ser.in_waiting > 0:
+                    self.data_bTM_bx_lvl = self.ser.read(self.ser.in_waiting).decode('utf-8').strip()
+                    self.data_bTM_bx_lvl = self.data_bTM_bx_lvl.replace('\x00','').replace('\r','')
+                    self.data_bTM_bx_lvl = self.data_bTM_bx_lvl.split('\n')
+                    self.wifi_bx_common_list.append(self.data_bTM_bx_lvl)
+                    self.Display_Box_lvl_wifi_txt(self.data_bTM_bx_lvl)
+                self.ser.close()
+               
+            except: 
+                self.ser.close()
+            for item in self.data_bTM_bx_lvl:
+                if item.startswith('PASS') or item.startswith('FAIL'):
+                    return True,'xxx'
+            return False,'xxx'
+        
+        if argg == 3:
+            list_temp = []
+            count = 0
+            try:
+                while self.ser.in_waiting == 0 and count < arg:
+                    time.sleep(1)
+                    count = count+ 1  
+                if self.ser.in_waiting > 0:
+                    self.data_wifi_bx_lvl = self.ser.read(self.ser.in_waiting).decode('utf-8').strip()
+                    self.data_wifi_bx_lvl = self.data_wifi_bx_lvl.replace('\x00','').replace('\r','')
+                    self.data_wifi_bx_lvl = self.data_wifi_bx_lvl.split('\n')
+                    print(self.data_wifi_bx_lvl)
+                self.ser.close()             
+            except:
+                pass
+            if count == arg:
+                count = 0
+                self.start_button.configure(state=customtkinter.NORMAL)
+                self.ser.close()
+
+            for i in self.data_wifi_bx_lvl:
+                if i.startswith('OTA'):
+                    return True,"xxx"
+            return False,"xxx"
+    
+####################################################################################################################################################################
+
+###################################################################################################################################################################
+    
+    def check_visually(self,arg):
+        try:
+            if arg == 1:
+                time.sleep(0.5)
+                msg = CTkMessagebox(title="WIFI BroadCast", message="Confirm Visually", option_1="Yes",option_2="No")
+                time.sleep(0.5)
+                if msg.get() == "Yes":
+                    data_visual = str("PASS\n")
+                    data_visual=data_visual.split('\n')
+                    msg.destroy()   
+                else:
+                    data_visual = str("FAIL\n")
+                    data_visual=data_visual.split('\n')
+                    msg.destroy()  
+
+                self.wifi_bx_common_list.append(data_visual)
+                
+                self.Display_Box_lvl_wifi_txt(data_visual)
+
+            if arg == 2:
+                time.sleep(0.5)
+                msg = CTkMessagebox(title="Visual Check", message="Is LCD screen visible", option_1="Yes",option_2="No")
+                time.sleep(0.5)
+                if msg.get() == "Yes":
+                    data_visual = str("PASS\n")
+                    data_visual=data_visual.split('\n') 
+                    msg.destroy()    
+                else:
+                    data_visual = str("FAIL\n")
+                    data_visual=data_visual.split('\n')
+                    msg.destroy()  
+                self.ble_bx_common_list.append(data_visual)
+                self.Display_Box_lvl_wifi_txt(data_visual)
+
+            if arg == 3:
+                time.sleep(0.5)
+                msg = CTkMessagebox(title="Visual Check", message="Is LCD Backlight visible", option_1="Yes",option_2="No")
+                time.sleep(0.5)
+                if msg.get() == "Yes":
+                    data_visual = str("PASS\n")
+                    data_visual=data_visual.split('\n')
+                    msg.destroy()     
+                else:
+                    data_visual = str("FAIL\n")
+                    data_visual=data_visual.split('\n')
+                    msg.destroy()  
+                self.ble_bx_common_list.append(data_visual)
+                self.Display_Box_lvl_wifi_txt(data_visual)
+
+            if arg == 4:
+                time.sleep(0.5)
+                msg = CTkMessagebox(title="Visual Check", message="Is LED Green,Blue,Red visible", option_1="Yes",option_2="No")
+                time.sleep(0.5)
+                if msg.get() == "Yes":
+                    data_visual = str("PASS\n")
+                    data_visual=data_visual.split('\n') 
+                    msg.destroy()    
+                else:
+                    data_visual = str("FAIL\n")
+                    data_visual=data_visual.split('\n')
+                self.ble_bx_common_list.append(data_visual)
+                msg.destroy()  
+                self.Display_Box_lvl_wifi_txt(data_visual)
+
+            if arg == 5:
+                time.sleep(0.5)
+                msg = CTkMessagebox(title="Visual Check", message="Was Buzzer audible", option_1="Yes",option_2="No")
+                time.sleep(0.5)
+                if msg.get() == "Yes":
+                    data_visual = str("PASS\n")
+                    data_visual=data_visual.split('\n')
+                    msg.destroy()     
+                else:
+                    data_visual = str("FAIL\n")
+                    data_visual=data_visual.split('\n')
+                    msg.destroy()  
+                self.ble_bx_common_list.append(data_visual)
+                self.Display_Box_lvl_wifi_txt(data_visual)
+            
+            if arg == 6:
+                time.sleep(0.5)
+                msg = CTkMessagebox(title="Bluetooth  Advertiser", message=" Advertise Bluetooth", option_1="OK")
+                time.sleep(0.5)
+                if msg.get() == "OK":
+                    msg.destroy()  
+                
+            
+            if arg == 7:
+                time.sleep(0.5)
+                msg = CTkMessagebox(title="Button Press", message=" Press SW1 for 5sec", option_1="OK")
+                time.sleep(0.5)
+                if msg.get() == "OK":
+                    msg.destroy()  
+                    
+
+            if arg == 8:
+                time.sleep(0.5)
+                msg = CTkMessagebox(title="Button Press", message=" Press SW2 for 5sec", option_1="OK")
+                time.sleep(0.5)
+                if msg.get() == "OK":
+                    msg.destroy()  
+                
+
+            if arg == 9:
+                time.sleep(0.5)
+                msg = CTkMessagebox(title="Button Press", message=" Press SW3 for 5sec", option_1="OK")
+                time.sleep(0.5)
+                if msg.get() == "OK":
+                    msg.destroy()  
+        except:
+            pass
+                
+########################################## BLE and Wifi_Box_level Text Display ###############################################
+
+    def Display_Box_lvl_wifi_txt(self,unfiltered_data):
+        for items in unfiltered_data:
+            
+            items.replace('\x00','').replace('\r','')
+            self.Text_box.insert(customtkinter.END,items)
+            self.Text_box.insert(customtkinter.END,'\n')
+
+######################################### BLE and Wifi Filtering and parsing ###############################################
+    def Editing(self,arg):
+        if arg == 0:
+            list_A = []
+            list_A = list(filter(None, self.ble_bx_common_list))
+            self.ble_bx_common_list=list_A
+            self.Parsing(arg)
+        if arg == 1:
+            list_A = []
+            list_A = list(filter(None, self.wifi_bx_common_list))
+            self.wifi_bx_common_list=list_A
+            self.Parsing(arg)
+
+####################################################################################################################################################################################    
+    def Parsing(self,arg):
+        if arg ==0:
+            result_ble_dict_bx= {f'ble_bx_Key_{i}': sublist for i, sublist in enumerate(self.ble_bx_common_list)}
+            print ('-----blexxxxx-->',result_ble_dict_bx)
+            for i,x in result_ble_dict_bx.items():
+                if i == 'ble_bx_Key_0':
+                    for item in x:
+                        if item.startswith("HDREV"):
+                            ble_split = item.split(':')
+                            check = ble_split[1].strip().replace('.','')
+                            self.list_ble_description_bx.append(ble_split[0])
+                            self.list_bl_val_ver_bx.append(ble_split[1])
+                            if check.isnumeric():
+                                self.list_ble_pf_bx.append("PASS")
+
+                            else:
+                                self.list_ble_pf_bx.append("FAIL")
+
+
+                        elif item.startswith("macId"):
+                            ble_split = item.split('macId:')
+                            ble_split[0]="MAC ID"
+                            check = ble_split[1].strip().replace(':','')
+                            self.list_ble_description_bx.append(ble_split[0])
+                            self.list_bl_val_ver_bx.append(ble_split[1])
+                            if check.isalnum() and int(check,16):
+                                self.list_ble_pf_bx.append("PASS")
+
+                            else:
+                                self.list_ble_pf_bx.append("FAIL")
+
+
+                        elif item.startswith("fwVer"):
+                            ble_split = item.split(':')
+                            check = ble_split[1].strip().replace('.','')
+                            self.list_ble_description_bx.append(ble_split[0])
+                            self.list_bl_val_ver_bx.append(ble_split[1])
+                            if check.isnumeric():
+                                self.list_ble_pf_bx.append("PASS")
+
+                            else:
+                                self.list_ble_pf_bx.append("FAIL")
+
+
+                        elif item.startswith("MAX FG BATT"):
+                            ble_split = item.split('MAX FG BATT - success')
+                            ble_split[0]='MAX FG BATT - success'
+                            check = ble_split[1].strip().replace('%','')
+                            self.list_ble_description_bx.append(ble_split[0])
+                            self.list_bl_val_ver_bx.append(ble_split[1])
+                            if check.isnumeric() and int(check)>60:
+                                self.list_ble_pf_bx.append("PASS")
+
+                            else:
+                                self.list_ble_pf_bx.append("FAIL")
+
+
+                        elif item.startswith("Temp"):
+                            ble_split = item.split(':')
+                            check = ble_split[1].strip('\t').replace('.','')
+                            self.list_ble_description_bx.append(ble_split[0].strip())
+                            self.list_bl_val_ver_bx.append(ble_split[1].strip('\t'))
+                            if check.isnumeric() and float(check)<550.0:   # temp 350.0 represents 35.00
+                                self.list_ble_pf_bx.append("PASS")
+
+                            else:
+                                self.list_ble_pf_bx.append("FAIL")
+
+                        
+                        elif item.startswith("Humidity"):
+                            ble_split = item.split(':')
+                            check = ble_split[1].strip('\t').replace('.','')
+                            self.list_ble_description_bx.append(ble_split[0].strip())
+                            self.list_bl_val_ver_bx.append(ble_split[1].strip('\t'))
+                            if check.isnumeric():   
+                                self.list_ble_pf_bx.append("PASS")
+
+                            else:
+                                self.list_ble_pf_bx.append("FAIL")
+
+
+                if i == 'ble_bx_Key_1':
+                    if 'PASS' in x:
+                        self.list_ble_description_bx.append('LCD Screen Test')
+                        self.list_bl_val_ver_bx.append('')
+                        self.list_ble_pf_bx.append("PASS")
+
+                    elif 'FAIL' in x:
+                        self.list_ble_description_bx.append('LCD Screen Test')
+                        self.list_bl_val_ver_bx.append('')
+                        self.list_ble_pf_bx.append("FAIL")
+
+            
+                if i == 'ble_bx_Key_2':
+                    if 'PASS' in x:
+                        self.list_ble_description_bx.append('LCD_Backlight Test')
+                        self.list_bl_val_ver_bx.append('')
+                        self.list_ble_pf_bx.append("PASS")
+
+                    elif 'FAIL' in x:
+                        self.list_ble_description_bx.append('LCD_Backlight Test')
+                        self.list_bl_val_ver_bx.append('')
+                        self.list_ble_pf_bx.append("FAIL")
+
+                if i == 'ble_bx_Key_3':
+                    if 'PASS' in x:
+                        self.list_ble_description_bx.append('LEDs Green,Blue,Red Test')
+                        self.list_bl_val_ver_bx.append('')
+                        self.list_ble_pf_bx.append("PASS")
+
+                    elif 'FAIL' in x:
+                        self.list_ble_description_bx.append('LEDs Green,Blue,Red Test')
+                        self.list_bl_val_ver_bx.append('')
+                        self.list_ble_pf_bx.append("FAIL")
+
+
+                if i == 'ble_bx_Key_4':
+                    if 'PASS' in x:
+                        self.list_ble_description_bx.append('Buzzer Test')
+                        self.list_bl_val_ver_bx.append('')
+                        self.list_ble_pf_bx.append("PASS")
+
+                    elif 'FAIL' in x:
+                        self.list_ble_description_bx.append('Buzzer Test')
+                        self.list_bl_val_ver_bx.append('')
+                        self.list_ble_pf_bx.append("FAIL")
+
+
+
+                if i == 'ble_bx_Key_5':
+                    if 'PASS' in x:
+                        self.list_ble_description_bx.append('Charging Test')
+                        self.list_bl_val_ver_bx.append('')
+                        self.list_ble_pf_bx.append("PASS")
+
+
+                    elif 'FAIL' in x:
+                        self.list_ble_description_bx.append('Charging Test')
+                        self.list_bl_val_ver_bx.append('')
+                        self.list_ble_pf_bx.append("FAIL")
+
+
+                if i == 'ble_bx_Key_6':
+
+                    if 'FAIL' not in x:
+                        self.list_ble_description_bx.append('BLE Scanning test')
+                        self.list_bl_val_ver_bx.append(x[0])
+                        self.list_ble_pf_bx.append("PASS")
+
+                    elif 'FAIL' in x:
+                        self.list_ble_description_bx.append('BLE Scanning test')
+                        self.list_bl_val_ver_bx.append('')
+                        self.list_ble_pf_bx.append("FAIL")
+
+
+                if i == 'ble_bx_Key_7' or i == 'ble_bx_Key_8' or i == 'ble_bx_Key_9' :
+                    if i=='ble_bx_Key_7':
+                        const = 'SW1'
+                    elif i == 'ble_bx_Key_8':
+                        const = 'SW2'
+                    elif i == 'ble_bx_Key_9':
+                        const = 'SW3'
+                    if 'PASS' in x:
+                        self.list_ble_description_bx.append(f'{const} Pressed')
+                        self.list_bl_val_ver_bx.append('')
+                        self.list_ble_pf_bx.append("PASS")
+
+                    elif 'FAIL' in x:
+                        self.list_ble_description_bx.append(f'{const} Pressed')
+                        self.list_bl_val_ver_bx.append('')
+                        self.list_ble_pf_bx.append("FAIL")
+
+#############################################################################################################################################################################################
+       
+        if arg == 1:
+            result_wifi_dict_bx= {f'wifi_bx_Key_{i}': sublist for i, sublist in enumerate(self.wifi_bx_common_list)}
+            print ('-----wifixxxxx-->',result_wifi_dict_bx)
+            for i,x in result_wifi_dict_bx.items():
+                if i =='wifi_bx_Key_0':
+                    for item in x:
+                        if item.startswith("Wifi Firmware Version"):
+                            wifi_split = item.split(':')
+                            check = wifi_split[1].strip().replace('.','')
+                            self.list_wifi_description_bx.append(wifi_split[0])
+                            self.list_wifi_val_ver_bx.append(wifi_split[1])
+                            if check.isnumeric():
+                                self.list_wifi_pf_bx.append("PASS")
+
+                            else:
+                                self.list_wifi_pf_bx.append("FAIL")
+ 
+                                                    
+                        elif item.startswith(' MAC address:'):
+                            wifi_split = item.split(' MAC address:')
+                            wifi_split[0]="MAC Address"
+                            check = wifi_split[1].strip()
+                            self.list_wifi_description_bx.append(wifi_split[0])
+                            self.list_wifi_val_ver_bx.append(wifi_split[1])
+                            if check!='':                                          
+                                self.list_wifi_pf_bx.append("PASS")
+ 
+                                
+                            else:
+                                self.list_wifi_pf_bx.append("FAIL")
+
+                                                    
+
+                        elif item.startswith("SIM ID"):
+                            wifi_split = item.split(':')
+                            check = wifi_split[1].strip().replace('.','')
+                            self.list_wifi_description_bx.append(wifi_split[0])
+                            self.list_wifi_val_ver_bx.append(wifi_split[1])
+                            if check.isalnum() and int(check,16):
+                                self.list_wifi_pf_bx.append("PASS")
+
+                                                    
+                            else:
+                                self.list_wifi_pf_bx.append("FAIL")
+
+                            
+                        elif item.startswith("IMEI"):
+                            wifi_split = item.split(':')
+                            check = wifi_split[1].strip().replace('.','')
+                            self.list_wifi_description_bx.append(wifi_split[0])
+                            self.list_wifi_val_ver_bx.append(wifi_split[1])
+                            if check.isnumeric() and int(check,16):
+                                self.list_wifi_pf_bx.append("PASS")
+
+                                
+                            else:
+                                self.list_wifi_pf_bx.append("FAIL")
+
+                                
+
+                        elif item.startswith('Ext. Flash'):
+                            dummy_str = f'{item}'+':'
+                            wifi_split = dummy_str.split(':')
+                            self.list_wifi_description_bx.append(wifi_split[0])
+                            self.list_wifi_val_ver_bx.append(wifi_split[1])
+                            if "Success" in item:
+                                self.list_wifi_pf_bx.append("PASS")
+
+                                                    
+                            else:
+                                self.list_wifi_pf_bx.append("FAIL")
+
+                                
+                if i =='wifi_bx_Key_1':
+                        if 'PASS' in x:
+                            self.list_wifi_description_bx.append('Wifi Broad-Cast')
+                            self.list_wifi_val_ver_bx.append('')
+                            self.list_wifi_pf_bx.append("PASS")
+
+                        elif 'FAIL' in x:
+                            self.list_wifi_description_bx.append('Wifi Broad-Cast')
+                            self.list_wifi_val_ver_bx.append('')
+                            self.list_wifi_pf_bx.append("FAIL")
+
+                    
+                if i =='wifi_bx_Key_2':
+                        if 'PASS' in x:
+                            self.list_wifi_description_bx.append('Verified Entered SSID')
+                            self.list_wifi_val_ver_bx.append('')
+                            self.list_wifi_pf_bx.append("PASS")
+
+                        elif 'FAIL' in x:
+                            self.list_wifi_description_bx.append('Verified Entered SSID')
+                            self.list_wifi_val_ver_bx.append('')
+                            self.list_wifi_pf_bx.append("FAIL")
+
+
+                if i =='wifi_bx_Key_3':
+                        if 'PASS' in x:
+                            dummy_var = x[0].split('Received:')
+                            self.list_wifi_description_bx.append('Time Update')
+                            self.list_wifi_val_ver_bx.append(dummy_var[1])
+                            self.list_wifi_pf_bx.append("PASS")
+
+                        elif 'FAIL' in x:
+                            self.list_wifi_description_bx.append('Time Update')
+                            self.list_wifi_val_ver_bx.append('')
+                            self.list_wifi_pf_bx.append("FAIL")
+
+
+                if i =='wifi_bx_Key_4':
+                        if 'PASS' in x:
+                            dummy_var = x[0].split(':')
+                            self.list_wifi_description_bx.append(x[0])
+                            self.list_wifi_val_ver_bx.append('')
+                            self.list_wifi_pf_bx.append("PASS")
+
+                        elif 'FAIL' in x:
+                            self.list_wifi_description_bx.append(x[0])
+                            self.list_wifi_val_ver_bx.append('')
+                            self.list_wifi_pf_bx.append("FAIL")
+
+####################################################################################################################################################################
+########################################## BLE and Wifi Save Data and Clear #############################################################################################
+    
+    def Out_Put_Report(self,output_list):
+        count_pass = 0
+        for x in output_list:
+            if x == 'PASS':
+                count_pass = count_pass+1
+        return count_pass
+    
+##########################################################################################################################################################################################
+#####################################################################################################################################################################################################  
+    
+    def save_data(self):
+        
+        date_time=datetime.datetime.now()
+        self.save_time=date_time.strftime("%H:%M:%S")
+        self.End_time=date_time.strftime("%H-%M-%S")
+        count_pass_wifi = self.Out_Put_Report(self.list_wifi_pf_bx)
+        count_pass_ble =  self.Out_Put_Report(self.list_ble_pf_bx)
+        check_total = lambda x, y : 'PASS' if x+y == 24 else 'FAIL' 
+        Result = check_total(count_pass_wifi,count_pass_ble)
+            
+        list_A=["Employee No","Serial No"]
+        list_B =[f'{self.Employee_name}',f'{self.Serial_name}']
+        list_D = ['Date','Start_Time','End_Time','Result']
+        list_E = [f'{self.datetime}',f'{self.Start_time}',f'{self.save_time}',f'{Result}']
+
+        data1={}
+        for i in range (len(list_A)):
+            data1[list_A[i]]=[list_B[i]]
+        A01=pd.DataFrame(data1)
+        A01t=A01.transpose()
+
+        data2={}
+        for i in range (len(list_D)):
+            data2[list_D[i]]=[list_E[i]]
+        A02=pd.DataFrame(data2)
+        A02t= A02.transpose()
+
+        self.Serial_name =  self.Serial_number.get()
+
+        ble_Description = {"BLUETOOTH-TEST REPORT":[" "]}
+        df_ble_head = pd.DataFrame(ble_Description)
+        Data_ble_df={"Description":self.list_ble_description_bx,"Version/Value":self.list_bl_val_ver_bx,"Result":self.list_ble_pf_bx}
+        df_ble = pd.DataFrame(Data_ble_df)
+        wifi_Description = {"WIFI-TEST REPORT":[" "]}
+        df_wifi_head = pd.DataFrame(wifi_Description)
+        Data_wifi_df={"Description":self.list_wifi_description_bx,"Version/Value":self.list_wifi_val_ver_bx,"Result":self.list_wifi_pf_bx}
+        df_wifi = pd.DataFrame(Data_wifi_df)
+
+        excel_file_path = f'D:\\BSD_Finel_Data\\Aaviza_Exc\\Aaviza_V_0.01\\Aaviza_Save\\BSD_Box_Level_Save\\{self.Serial_name}_wifi_ble_data_box{self.End_time}_Result_{Result}.xlsx'
+        with pd.ExcelWriter(excel_file_path, engine='xlsxwriter') as writer:
+            A01t.to_excel(writer, header=False, index=True, startrow=0, startcol=0, sheet_name='Sheet1')
+            A02t.to_excel(writer, header=False, index=True, startrow=0, startcol=2, sheet_name='Sheet1')
+            df_wifi_head.to_excel(writer, sheet_name='Sheet1', index=False,startcol=1,startrow=6)
+            df_wifi.to_excel(writer, sheet_name='Sheet1', index=False,startcol=0,startrow=7)
+            df_ble_head.to_excel(writer, sheet_name='Sheet1', index=False,startcol=1,startrow=17)
+            df_ble.to_excel(writer, sheet_name='Sheet1', index=False, startrow=18,startcol=0)
+      
+        file_path = excel_file_path 
+
+        workbook = openpyxl.load_workbook(file_path)
+        sheet = workbook['Sheet1']
+        cell1=sheet['D4']
+        cell_text1=cell1.value
+        if 'FAIL' in cell_text1:
+            fill = PatternFill(start_color='FA4E2E',end_color='FA4E2E', fill_type='solid')
+            cell1.fill = fill
+        elif 'PASS' in cell_text1:
+            fill = PatternFill(start_color='00FF00',end_color='00FF00', fill_type='solid')
+            cell1.fill = fill
+        workbook.save(file_path) 
+
+        workbook = openpyxl.load_workbook(file_path)
+        sheet = workbook.active
+        for i in range(0,4):
+            column_index = i
+            max_length = 0
+            for cell in sheet[chr(65 + column_index)]:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except Exception as e:
+                    print(f"Error: {e}")
+                sheet.column_dimensions[chr(65 + column_index)].width = max_length + 2
+                workbook.save(file_path)
+        self.clear_all()
+
+########################################################################################################################################################################################
+##############################################################################################################################################################################
+    
+    def clear_all(self):
+        self.list_wifi_description_bx =[]
+        self.list_wifi_val_ver_bx=[]
+        self.list_wifi_pf_bx=[]
+        self.wifi_bx_common_list=[]
+        self.ble_bx_common_list=[]
+        self.list_ble_description_bx=[]
+        self.list_bl_val_ver_bx=[]
+        self.list_ble_pf_bx=[]
+        self.clear_text()
+
+    def clear_text(self):
+        size  = self.Text_box.size()
+        print(size)
+        self.Text_box.delete('0.0','end')
+        self.start_button.configure(state=customtkinter.NORMAL)
+
+    def clear(self):
+        try:
+            if self.ser.is_open:
+                time.sleep(0.5)
+                self.ser.close()   
+        except:
+            pass
+    
+        self.MisMatch_WB_In_Comm()
+
+    def MisMatch_WB_In_Comm(self):
+        self.boot_device_or_Exit = 'Exit'
+        self.wifi_loop_count = 0
+        self.ble_loop_count = 0
+        self.reboot_flag = False
+        self.box_lvl_wifi_flag = False
+        self.box_lvl_ble_flag = False
+        self.run_flag = False
+        self.save_flag = False
+        self.clear_all()
+ 
+    def disconnect_action(self):
+        if self.ser.is_open:
+            time.sleep(0.5)
+            self.ser.close()
+            self.connect_button.configure(state=customtkinter.NORMAL)
+        else:
+            self.connect_button.configure(state=customtkinter.NORMAL)
+
+    def BSD_Box_Time_Out(self):
+        self.Time_out_POP_UP()
+        self.box_lvl_wifi_flag = False
+        self.run_flag = False
+        self.box_lvl_ble_flag = False
+        self.flash_flag=False
+        self.reboot_flag = False
+        self.boot_device_or_Exit = 'Exit'
+        try:
+            self.ser.close()
+
+        except:
+            pass
+        self.clear_text()
+
+    def Send_Command_th(self):
+        ts = threading.Thread(target=self.Send_Command,daemon=False)  
+        ts.start()
+
+###################################################################################################################################################################################################################################################
+
+######################################################################################################################################################################################################################################
+
+if __name__=="__main__":
+    try:
+        comm_port=serial_communications()
+        comm_port.root.mainloop()
+    except:
+        pass
+
+##################################################################################################################################################################3
